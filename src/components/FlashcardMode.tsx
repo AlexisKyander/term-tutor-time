@@ -66,8 +66,8 @@ export const FlashcardMode = ({ vocabulary, onBack }: FlashcardModeProps) => {
     if (!correct && normalizedAnswer.length > 2) {
       const editDistance = getEditDistance(normalizedAnswer, normalizedCorrect);
       const maxLength = Math.max(normalizedAnswer.length, normalizedCorrect.length);
-      // Consider "almost correct" if edit distance is 1-2 for reasonable word lengths
-      isAlmostCorrect = editDistance <= 2 && editDistance / maxLength <= 0.3;
+      // More lenient threshold for letter swaps and minor errors
+      isAlmostCorrect = editDistance <= 2 && (editDistance <= 2 || editDistance / maxLength <= 0.4);
     }
     
     setIsCorrect(correct);
