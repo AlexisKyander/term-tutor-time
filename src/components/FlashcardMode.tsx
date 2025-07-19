@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, RotateCcw, CheckCircle, XCircle, Eye } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, RotateCcw, CheckCircle, XCircle } from "lucide-react";
 import { VocabularyItem } from "@/pages/Index";
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,7 +14,9 @@ interface FlashcardModeProps {
 
 export const FlashcardMode = ({ vocabulary, onBack }: FlashcardModeProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [showTranslation, setShowTranslation] = useState(false);
+  const [userAnswer, setUserAnswer] = useState("");
+  const [showResult, setShowResult] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
   const [shuffledVocabulary, setShuffledVocabulary] = useState<VocabularyItem[]>([]);
   const [score, setScore] = useState({ correct: 0, total: 0 });
   const [sessionComplete, setSessionComplete] = useState(false);
@@ -28,24 +31,36 @@ export const FlashcardMode = ({ vocabulary, onBack }: FlashcardModeProps) => {
   const currentCard = shuffledVocabulary[currentIndex];
   const progress = ((currentIndex + 1) / shuffledVocabulary.length) * 100;
 
-  const handleReveal = () => {
-    setShowTranslation(true);
+  const normalizeText = (text: string) => {
+    return text.toLowerCase().trim();
   };
 
-  const handleAnswer = (correct: boolean) => {
+  const checkAnswer = () => {
+    if (!userAnswer.trim()) return;
+    
+    const normalizedAnswer = normalizeText(userAnswer);
+    const normalizedCorrect = normalizeText(currentCard.translation);
+    const correct = normalizedAnswer === normalizedCorrect;
+    
+    setIsCorrect(correct);
+    setShowResult(true);
+    
     setScore(prev => ({
       correct: prev.correct + (correct ? 1 : 0),
       total: prev.total + 1
     }));
+  };
 
+  const nextCard = () => {
     if (currentIndex < shuffledVocabulary.length - 1) {
       setCurrentIndex(prev => prev + 1);
-      setShowTranslation(false);
+      setUserAnswer("");
+      setShowResult(false);
     } else {
       setSessionComplete(true);
       toast({
         title: "Session Complete!",
-        description: `You scored ${score.correct + (correct ? 1 : 0)} out of ${score.total + 1}`,
+        description: `You scored ${score.correct} out of ${score.total + 1}`,
       });
     }
   };
@@ -54,9 +69,20 @@ export const FlashcardMode = ({ vocabulary, onBack }: FlashcardModeProps) => {
     const shuffled = [...vocabulary].sort(() => Math.random() - 0.5);
     setShuffledVocabulary(shuffled);
     setCurrentIndex(0);
-    setShowTranslation(false);
+    setUserAnswer("");
+    setShowResult(false);
     setScore({ correct: 0, total: 0 });
     setSessionComplete(false);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      if (showResult) {
+        nextCard();
+      } else {
+        checkAnswer();
+      }
+    }
   };
 
   if (!currentCard && !sessionComplete) {
@@ -137,41 +163,57 @@ export const FlashcardMode = ({ vocabulary, onBack }: FlashcardModeProps) => {
             <h2 className="text-4xl font-bold">{currentCard.word}</h2>
           </div>
 
-          {showTranslation ? (
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground uppercase tracking-wider">
-                  {currentCard.targetLanguage}
-                </p>
-                <h3 className="text-3xl font-semibold text-primary">
-                  {currentCard.translation}
-                </h3>
-              </div>
-              
-              <div className="flex gap-4 justify-center">
-                <Button 
-                  onClick={() => handleAnswer(false)}
-                  variant="outline"
-                  className="flex-1 max-w-32 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                >
-                  <XCircle className="w-4 h-4 mr-2" />
-                  Wrong
-                </Button>
-                <Button 
-                  onClick={() => handleAnswer(true)}
-                  className="flex-1 max-w-32 bg-success hover:bg-success/90 text-success-foreground"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Correct
-                </Button>
-              </div>
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground uppercase tracking-wider">
+                Translate to {currentCard.targetLanguage}
+              </p>
+              <Input
+                value={userAnswer}
+                onChange={(e) => setUserAnswer(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Type your answer..."
+                className="text-center text-lg h-12"
+                disabled={showResult}
+              />
             </div>
-          ) : (
-            <Button onClick={handleReveal} size="lg" className="w-full max-w-48">
-              <Eye className="w-4 h-4 mr-2" />
-              Reveal Translation
-            </Button>
-          )}
+
+            {showResult ? (
+              <div className="space-y-6">
+                <div className={`p-4 rounded-lg ${isCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                  <div className="flex items-center justify-center space-x-2 mb-2">
+                    {isCorrect ? (
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-red-600" />
+                    )}
+                    <span className={`font-semibold ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                      {isCorrect ? 'Correct!' : 'Incorrect'}
+                    </span>
+                  </div>
+                  {!isCorrect && (
+                    <p className="text-center">
+                      <span className="text-muted-foreground">Correct answer: </span>
+                      <span className="font-semibold">{currentCard.translation}</span>
+                    </p>
+                  )}
+                </div>
+                
+                <Button onClick={nextCard} size="lg" className="w-full max-w-48">
+                  {currentIndex < shuffledVocabulary.length - 1 ? 'Next Card' : 'Finish Session'}
+                </Button>
+              </div>
+            ) : (
+              <Button 
+                onClick={checkAnswer} 
+                size="lg" 
+                className="w-full max-w-48"
+                disabled={!userAnswer.trim()}
+              >
+                Check Answer
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
