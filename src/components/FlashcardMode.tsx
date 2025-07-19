@@ -35,6 +35,26 @@ export const FlashcardMode = ({ vocabulary, onBack }: FlashcardModeProps) => {
     return text.toLowerCase().trim();
   };
 
+  const getEditDistance = (str1: string, str2: string): number => {
+    const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
+
+    for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
+    for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
+
+    for (let j = 1; j <= str2.length; j++) {
+      for (let i = 1; i <= str1.length; i++) {
+        const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
+        matrix[j][i] = Math.min(
+          matrix[j][i - 1] + 1, // deletion
+          matrix[j - 1][i] + 1, // insertion
+          matrix[j - 1][i - 1] + indicator // substitution
+        );
+      }
+    }
+
+    return matrix[str2.length][str1.length];
+  };
+
   const checkAnswer = () => {
     if (!userAnswer.trim()) return;
     
@@ -42,8 +62,19 @@ export const FlashcardMode = ({ vocabulary, onBack }: FlashcardModeProps) => {
     const normalizedCorrect = normalizeText(currentCard.translation);
     const correct = normalizedAnswer === normalizedCorrect;
     
+    let isAlmostCorrect = false;
+    if (!correct && normalizedAnswer.length > 2) {
+      const editDistance = getEditDistance(normalizedAnswer, normalizedCorrect);
+      const maxLength = Math.max(normalizedAnswer.length, normalizedCorrect.length);
+      // Consider "almost correct" if edit distance is 1-2 for reasonable word lengths
+      isAlmostCorrect = editDistance <= 2 && editDistance / maxLength <= 0.3;
+    }
+    
     setIsCorrect(correct);
     setShowResult(true);
+    
+    // Store the almost correct state for display
+    (window as any).isAlmostCorrect = isAlmostCorrect;
     
     setScore(prev => ({
       correct: prev.correct + (correct ? 1 : 0),
@@ -180,15 +211,29 @@ export const FlashcardMode = ({ vocabulary, onBack }: FlashcardModeProps) => {
 
             {showResult ? (
               <div className="space-y-6">
-                <div className={`p-4 rounded-lg ${isCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                <div className={`p-4 rounded-lg ${
+                  isCorrect 
+                    ? 'bg-green-50 border border-green-200' 
+                    : (window as any).isAlmostCorrect 
+                      ? 'bg-yellow-50 border border-yellow-200' 
+                      : 'bg-red-50 border border-red-200'
+                }`}>
                   <div className="flex items-center justify-center space-x-2 mb-2">
                     {isCorrect ? (
                       <CheckCircle className="w-5 h-5 text-green-600" />
+                    ) : (window as any).isAlmostCorrect ? (
+                      <CheckCircle className="w-5 h-5 text-yellow-600" />
                     ) : (
                       <XCircle className="w-5 h-5 text-red-600" />
                     )}
-                    <span className={`font-semibold ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
-                      {isCorrect ? 'Correct!' : 'Incorrect'}
+                    <span className={`font-semibold ${
+                      isCorrect 
+                        ? 'text-green-600' 
+                        : (window as any).isAlmostCorrect 
+                          ? 'text-yellow-600' 
+                          : 'text-red-600'
+                    }`}>
+                      {isCorrect ? 'Correct!' : (window as any).isAlmostCorrect ? 'Almost correct!' : 'Incorrect'}
                     </span>
                   </div>
                   {!isCorrect && (
