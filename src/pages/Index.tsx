@@ -12,6 +12,7 @@ export interface VocabularyItem {
   id: string;
   word: string;
   translation: string;
+  comment: string;
   language: string;
   targetLanguage: string;
   deckId: string;

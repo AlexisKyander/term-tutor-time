@@ -2,12 +2,23 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+export interface VocabularyItem {
+  id: string;
+  word: string;
+  translation: string;
+  comment: string;
+  language: string;
+  targetLanguage: string;
+  deckId: string;
+  createdAt: Date;
+}
+
 interface VocabularyFormProps {
-  onAdd: (item: { word: string; translation: string; language: string; targetLanguage: string; deckId: string }) => void;
+  onAdd: (item: { word: string; translation: string; comment: string; language: string; targetLanguage: string; deckId: string }) => void;
   onBack: () => void;
   deckName: string;
   deckId: string;
@@ -16,6 +27,7 @@ interface VocabularyFormProps {
 export const VocabularyForm = ({ onAdd, onBack, deckName, deckId }: VocabularyFormProps) => {
   const [word, setWord] = useState("");
   const [translation, setTranslation] = useState("");
+  const [comment, setComment] = useState("");
   const [language, setLanguage] = useState("English");
   const [targetLanguage, setTargetLanguage] = useState("Spanish");
   const { toast } = useToast();
@@ -25,8 +37,8 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId }: VocabularyFo
     
     if (!word.trim() || !translation.trim()) {
       toast({
-        title: "Missing information",
-        description: "Please fill in both the word and translation.",
+        title: "Error",
+        description: "Please fill in both word and translation",
         variant: "destructive",
       });
       return;
@@ -35,87 +47,98 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId }: VocabularyFo
     onAdd({
       word: word.trim(),
       translation: translation.trim(),
+      comment: comment.trim(),
       language,
       targetLanguage,
       deckId,
     });
-
-    toast({
-      title: "Vocabulary added!",
-      description: `Added "${word}" → "${translation}"`,
-    });
-
     setWord("");
     setTranslation("");
+    setComment("");
+    
+    toast({
+      title: "Success!",
+      description: "Vocabulary added successfully",
+    });
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <Button 
-        variant="ghost" 
-        onClick={onBack}
-        className="mb-6"
-      >
+    <div className="max-w-md mx-auto">
+      <Button variant="ghost" onClick={onBack} className="mb-4">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back to {deckName}
       </Button>
-
+      
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Plus className="w-5 h-5 mr-2" />
-            Add to {deckName}
-          </CardTitle>
+          <CardTitle>Add New Vocabulary</CardTitle>
+          <CardDescription>
+            Add a new word and its translation to {deckName}
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="word">Word</Label>
+              <Input
+                id="word"
+                placeholder="Enter the word"
+                value={word}
+                onChange={(e) => setWord(e.target.value)}
+                autoFocus
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="translation">Translation</Label>
+              <Input
+                id="translation"
+                placeholder="Enter the translation"
+                value={translation}
+                onChange={(e) => setTranslation(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="comment">Context/Comment (optional)</Label>
+              <Input
+                id="comment"
+                placeholder="e.g., Used in formal settings, Common greeting"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="language">From Language</Label>
                 <Input
                   id="language"
+                  placeholder="e.g., English"
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
-                  placeholder="e.g., English"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="targetLanguage">To Language</Label>
                 <Input
                   id="targetLanguage"
+                  placeholder="e.g., Spanish"
                   value={targetLanguage}
                   onChange={(e) => setTargetLanguage(e.target.value)}
-                  placeholder="e.g., Spanish"
                 />
               </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="word">Word</Label>
-              <Input
-                id="word"
-                value={word}
-                onChange={(e) => setWord(e.target.value)}
-                placeholder="Enter the word to learn"
-                className="text-lg"
-              />
+            
+            <div className="flex gap-2">
+              <Button type="submit" className="flex-1">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Vocabulary
+              </Button>
+              <Button type="button" variant="outline" onClick={onBack}>
+                Cancel
+              </Button>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="translation">Translation</Label>
-              <Input
-                id="translation"
-                value={translation}
-                onChange={(e) => setTranslation(e.target.value)}
-                placeholder="Enter the translation"
-                className="text-lg"
-              />
-            </div>
-
-            <Button type="submit" className="w-full">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Vocabulary
-            </Button>
           </form>
         </CardContent>
       </Card>

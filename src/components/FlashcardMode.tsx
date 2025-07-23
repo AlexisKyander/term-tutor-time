@@ -244,6 +244,14 @@ export const FlashcardMode = ({ vocabulary, onBack }: FlashcardModeProps) => {
                   )}
                 </div>
                 
+                {currentCard.comment && (
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <p className="text-sm text-muted-foreground italic">
+                      Context: {currentCard.comment}
+                    </p>
+                  </div>
+                )}
+                
                 <Button onClick={nextCard} size="lg" className="w-full max-w-48">
                   {currentIndex < shuffledVocabulary.length - 1 ? 'Next Card' : 'Finish Session'}
                 </Button>
