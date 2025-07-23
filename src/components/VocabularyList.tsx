@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Trash2, BookOpen } from "lucide-react";
+import { ArrowLeft, Trash2, BookOpen, Plus } from "lucide-react";
 import { VocabularyItem } from "@/pages/Index";
 import { useToast } from "@/hooks/use-toast";
 
@@ -8,9 +8,11 @@ interface VocabularyListProps {
   vocabulary: VocabularyItem[];
   onDelete: (id: string) => void;
   onBack: () => void;
+  deckName: string;
+  onAddWord: () => void;
 }
 
-export const VocabularyList = ({ vocabulary, onDelete, onBack }: VocabularyListProps) => {
+export const VocabularyList = ({ vocabulary, onDelete, onBack, deckName, onAddWord }: VocabularyListProps) => {
   const { toast } = useToast();
 
   const handleDelete = (item: VocabularyItem) => {
@@ -31,21 +33,23 @@ export const VocabularyList = ({ vocabulary, onDelete, onBack }: VocabularyListP
   }, {} as Record<string, VocabularyItem[]>);
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <Button 
-        variant="ghost" 
-        onClick={onBack}
-        className="mb-6"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Overview
-      </Button>
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to {deckName}
+        </Button>
+        <Button onClick={onAddWord}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Word
+        </Button>
+      </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
             <BookOpen className="w-5 h-5 mr-2" />
-            Your Vocabulary ({vocabulary.length} words)
+            {deckName} Vocabulary ({vocabulary.length} words)
           </CardTitle>
         </CardHeader>
         <CardContent>

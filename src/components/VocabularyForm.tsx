@@ -7,11 +7,13 @@ import { ArrowLeft, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface VocabularyFormProps {
-  onAdd: (item: { word: string; translation: string; language: string; targetLanguage: string }) => void;
+  onAdd: (item: { word: string; translation: string; language: string; targetLanguage: string; deckId: string }) => void;
   onBack: () => void;
+  deckName: string;
+  deckId: string;
 }
 
-export const VocabularyForm = ({ onAdd, onBack }: VocabularyFormProps) => {
+export const VocabularyForm = ({ onAdd, onBack, deckName, deckId }: VocabularyFormProps) => {
   const [word, setWord] = useState("");
   const [translation, setTranslation] = useState("");
   const [language, setLanguage] = useState("English");
@@ -35,6 +37,7 @@ export const VocabularyForm = ({ onAdd, onBack }: VocabularyFormProps) => {
       translation: translation.trim(),
       language,
       targetLanguage,
+      deckId,
     });
 
     toast({
@@ -54,14 +57,14 @@ export const VocabularyForm = ({ onAdd, onBack }: VocabularyFormProps) => {
         className="mb-6"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Overview
+        Back to {deckName}
       </Button>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
             <Plus className="w-5 h-5 mr-2" />
-            Add New Vocabulary
+            Add to {deckName}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
