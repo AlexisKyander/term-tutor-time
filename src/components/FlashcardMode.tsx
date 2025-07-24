@@ -105,6 +105,9 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
       correct: prev.correct + (correct ? 1 : 0),
       total: prev.total + 1
     }));
+
+    // Clear focus to prevent accidental Enter press from advancing immediately
+    (document.activeElement as HTMLElement)?.blur();
   };
 
   const nextCard = () => {
