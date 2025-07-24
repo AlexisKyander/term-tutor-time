@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Trash2, BookOpen, Plus } from "lucide-react";
+import { ArrowLeft, Trash2, BookOpen, Plus, Edit3, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export interface VocabularyItem {
@@ -12,17 +12,23 @@ export interface VocabularyItem {
   targetLanguage: string;
   deckId: string;
   createdAt: Date;
+  statistics: {
+    correct: number;
+    almostCorrect: number;
+    incorrect: number;
+  };
 }
 
 interface VocabularyListProps {
   vocabulary: VocabularyItem[];
   onDelete: (id: string) => void;
+  onEdit: (id: string) => void;
   onBack: () => void;
   deckName: string;
   onAddWord: () => void;
 }
 
-export const VocabularyList = ({ vocabulary, onDelete, onBack, deckName, onAddWord }: VocabularyListProps) => {
+export const VocabularyList = ({ vocabulary, onDelete, onEdit, onBack, deckName, onAddWord }: VocabularyListProps) => {
   const { toast } = useToast();
 
   const handleDelete = (item: VocabularyItem) => {
@@ -80,30 +86,48 @@ export const VocabularyList = ({ vocabulary, onDelete, onBack, deckName, onAddWo
                   <h3 className="font-semibold text-lg text-muted-foreground">
                     {languagePair.replace('-', ' → ')}
                   </h3>
-                  {items.map((item) => (
-                    <div key={item.id} className="flex items-start justify-between p-4 bg-muted/50 rounded-lg">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="font-medium text-lg">{item.word}</span>
-                          <span className="text-muted-foreground">→</span>
-                          <span className="text-lg">{item.translation}</span>
-                        </div>
-                        {item.comment && (
-                          <p className="text-sm text-muted-foreground italic mt-1">
-                            {item.comment}
-                          </p>
-                        )}
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(item)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
+                   {items.map((item) => (
+                     <div key={item.id} className="flex items-start justify-between p-4 bg-muted/50 rounded-lg">
+                       <div className="flex-1">
+                         <div className="flex items-center space-x-2 mb-1">
+                           <span className="font-medium text-lg">{item.word}</span>
+                           <span className="text-muted-foreground">→</span>
+                           <span className="text-lg">{item.translation}</span>
+                         </div>
+                         {item.comment && (
+                           <p className="text-sm text-muted-foreground italic mt-1">
+                             {item.comment}
+                           </p>
+                         )}
+                         <div className="flex items-center space-x-4 mt-2 text-xs text-muted-foreground">
+                           <div className="flex items-center space-x-1">
+                             <TrendingUp className="w-3 h-3" />
+                             <span>✓ {item.statistics.correct}</span>
+                             <span>~ {item.statistics.almostCorrect}</span>
+                             <span>✗ {item.statistics.incorrect}</span>
+                           </div>
+                         </div>
+                       </div>
+                       <div className="flex space-x-1">
+                         <Button
+                           variant="ghost"
+                           size="sm"
+                           onClick={() => onEdit(item.id)}
+                           className="text-muted-foreground hover:text-foreground"
+                         >
+                           <Edit3 className="w-4 h-4" />
+                         </Button>
+                         <Button
+                           variant="ghost"
+                           size="sm"
+                           onClick={() => handleDelete(item)}
+                           className="text-destructive hover:text-destructive"
+                         >
+                           <Trash2 className="w-4 h-4" />
+                         </Button>
+                       </div>
+                     </div>
+                   ))}
                 </div>
               ))}
             </div>

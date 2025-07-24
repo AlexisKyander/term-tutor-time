@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { VocabularyForm } from "@/components/VocabularyForm";
 import { VocabularyList } from "@/components/VocabularyList";
+import { VocabularyEditForm } from "@/components/VocabularyEditForm";
 import { FlashcardMode } from "@/components/FlashcardMode";
 import { FolderList, type Folder } from "@/components/FolderList";
 import { DeckList, type Deck } from "@/components/DeckList";
 import { FolderForm } from "@/components/FolderForm";
 import { DeckForm } from "@/components/DeckForm";
+import { Settings, type StudySettings } from "@/components/Settings";
 import { useToast } from "@/hooks/use-toast";
 
 export interface VocabularyItem {
@@ -17,13 +19,19 @@ export interface VocabularyItem {
   targetLanguage: string;
   deckId: string;
   createdAt: Date;
+  statistics: {
+    correct: number;
+    almostCorrect: number;
+    incorrect: number;
+  };
 }
 
-type Mode = 'folders' | 'add-folder' | 'decks' | 'add-deck' | 'vocabulary' | 'add-word' | 'study';
+type Mode = 'folders' | 'add-folder' | 'decks' | 'add-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'study' | 'settings';
 
 interface NavigationState {
   currentFolderId?: string;
   currentDeckId?: string;
+  editingVocabularyId?: string;
 }
 
 const Index = () => {
@@ -32,6 +40,10 @@ const Index = () => {
   const [vocabulary, setVocabulary] = useState<VocabularyItem[]>([]);
   const [mode, setMode] = useState<Mode>('folders');
   const [navigation, setNavigation] = useState<NavigationState>({});
+  const [settings, setSettings] = useState<StudySettings>({
+    incorrectRepetitions: 2,
+    almostCorrectRepetitions: 2,
+  });
   const { toast } = useToast();
 
   const addFolder = (name: string) => {
@@ -87,18 +99,45 @@ const Index = () => {
     });
   };
 
-  const addVocabulary = (item: Omit<VocabularyItem, 'id' | 'createdAt'>) => {
+  const addVocabulary = (item: Omit<VocabularyItem, 'id' | 'createdAt' | 'statistics'>) => {
     const newItem: VocabularyItem = {
       ...item,
       id: crypto.randomUUID(),
       createdAt: new Date(),
+      statistics: { correct: 0, almostCorrect: 0, incorrect: 0 },
     };
     setVocabulary(prev => [...prev, newItem]);
     setMode('vocabulary');
   };
 
+  const updateVocabulary = (updatedItem: VocabularyItem) => {
+    setVocabulary(prev => prev.map(item => 
+      item.id === updatedItem.id ? updatedItem : item
+    ));
+    setMode('vocabulary');
+  };
+
   const deleteVocabulary = (id: string) => {
     setVocabulary(prev => prev.filter(item => item.id !== id));
+  };
+
+  const editVocabulary = (id: string) => {
+    setNavigation(prev => ({ ...prev, editingVocabularyId: id }));
+    setMode('edit-word');
+  };
+
+  const updateVocabularyStatistics = (vocabularyId: string, result: 'correct' | 'almostCorrect' | 'incorrect') => {
+    setVocabulary(prev => prev.map(item => 
+      item.id === vocabularyId 
+        ? {
+            ...item,
+            statistics: {
+              ...item.statistics,
+              [result]: item.statistics[result] + 1
+            }
+          }
+        : item
+    ));
   };
 
   const selectFolder = (folderId: string) => {
@@ -139,6 +178,15 @@ const Index = () => {
     }, {} as Record<string, number>);
   };
 
+  const getDeckCompletionStatus = () => {
+    return decks.reduce((acc, deck) => {
+      const deckVocab = vocabulary.filter(v => v.deckId === deck.id);
+      const hasAllCorrect = deckVocab.length > 0 && deckVocab.every(v => v.statistics.correct > 0);
+      acc[deck.id] = hasAllCorrect;
+      return acc;
+    }, {} as Record<string, boolean>);
+  };
+
   const renderContent = () => {
     switch (mode) {
       case 'add-folder':
@@ -160,11 +208,13 @@ const Index = () => {
             decks={getCurrentDecks()}
             folderName={currentFolder.name}
             vocabularyCounts={getVocabularyCounts()}
+            deckCompletionStatus={getDeckCompletionStatus()}
             onSelectDeck={selectDeck}
             onAddDeck={() => setMode('add-deck')}
             onDeleteDeck={deleteDeck}
             onStudyDeck={studyDeck}
             onBack={() => setMode('folders')}
+            onSettings={() => setMode('settings')}
           />
         );
       }
@@ -195,6 +245,7 @@ const Index = () => {
             vocabulary={getCurrentVocabulary()}
             deckName={currentDeck.name}
             onDelete={deleteVocabulary}
+            onEdit={editVocabulary}
             onAddWord={() => setMode('add-word')}
             onBack={() => setMode('decks')}
           />
@@ -217,6 +268,23 @@ const Index = () => {
         );
       }
 
+      case 'edit-word': {
+        const currentDeck = getCurrentDeck();
+        const editingItem = vocabulary.find(v => v.id === navigation.editingVocabularyId);
+        if (!currentDeck || !editingItem) {
+          setMode('vocabulary');
+          return null;
+        }
+        return (
+          <VocabularyEditForm 
+            item={editingItem}
+            deckName={currentDeck.name}
+            onUpdate={updateVocabulary}
+            onBack={() => setMode('vocabulary')}
+          />
+        );
+      }
+
       case 'study': {
         const currentDeck = getCurrentDeck();
         const vocabItems = getCurrentVocabulary();
@@ -229,10 +297,21 @@ const Index = () => {
         return (
           <FlashcardMode 
             vocabulary={vocabItems}
+            settings={settings}
             onBack={() => setMode('decks')}
+            onUpdateStatistics={updateVocabularyStatistics}
           />
         );
       }
+
+      case 'settings':
+        return (
+          <Settings 
+            settings={settings}
+            onUpdateSettings={setSettings}
+            onBack={() => setMode('folders')}
+          />
+        );
 
       default:
         return (

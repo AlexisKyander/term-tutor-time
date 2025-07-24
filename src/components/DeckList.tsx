@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, BookOpen, Plus, Trash2, Brain } from "lucide-react";
+import { ArrowLeft, BookOpen, Plus, Trash2, Brain, Settings, CheckCircle } from "lucide-react";
 
 export interface Deck {
   id: string;
@@ -13,22 +13,26 @@ interface DeckListProps {
   decks: Deck[];
   folderName: string;
   vocabularyCounts: Record<string, number>;
+  deckCompletionStatus: Record<string, boolean>;
   onSelectDeck: (deckId: string) => void;
   onAddDeck: () => void;
   onDeleteDeck: (id: string) => void;
   onStudyDeck: (deckId: string) => void;
   onBack: () => void;
+  onSettings: () => void;
 }
 
 export const DeckList = ({ 
   decks, 
   folderName, 
   vocabularyCounts, 
+  deckCompletionStatus,
   onSelectDeck, 
   onAddDeck, 
   onDeleteDeck, 
   onStudyDeck, 
-  onBack 
+  onBack,
+  onSettings
 }: DeckListProps) => {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -43,10 +47,16 @@ export const DeckList = ({
             <p className="text-muted-foreground">Vocabulary decks in this folder</p>
           </div>
         </div>
-        <Button onClick={onAddDeck}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Deck
-        </Button>
+        <div className="flex space-x-2">
+          <Button variant="outline" onClick={onSettings}>
+            <Settings className="w-4 h-4 mr-2" />
+            Settings
+          </Button>
+          <Button onClick={onAddDeck}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Deck
+          </Button>
+        </div>
       </div>
 
       {decks.length === 0 ? (
@@ -66,6 +76,7 @@ export const DeckList = ({
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {decks.map((deck) => {
             const vocabCount = vocabularyCounts[deck.id] || 0;
+            const isCompleted = deckCompletionStatus[deck.id];
             return (
               <Card key={deck.id} className="group hover:shadow-lg transition-all duration-300">
                 <CardHeader>
@@ -75,9 +86,17 @@ export const DeckList = ({
                         <BookOpen className="w-5 h-5 text-accent" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg">{deck.name}</CardTitle>
+                        <div className="flex items-center space-x-2">
+                          <CardTitle className="text-lg">{deck.name}</CardTitle>
+                          {isCompleted && (
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                          )}
+                        </div>
                         <CardDescription>
                           {vocabCount} words
+                          {isCompleted && (
+                            <span className="text-green-600 ml-2">• All mastered</span>
+                          )}
                         </CardDescription>
                       </div>
                     </div>
