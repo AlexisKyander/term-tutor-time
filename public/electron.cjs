@@ -25,17 +25,28 @@ function createWindow() {
   // Load the app
   const startUrl = isDev 
     ? 'http://localhost:8080' 
-    : `file://${path.join(__dirname, '../dist/index.html')}`;
+    : `file://${path.resolve(__dirname, '../dist/index.html')}`;
+  
+  console.log('Loading URL:', startUrl);
+  console.log('__dirname:', __dirname);
   
   mainWindow.loadURL(startUrl);
+  
+  // Log any loading errors
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    console.error('Failed to load:', errorCode, errorDescription);
+  });
 
   // Show window when ready
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
   });
 
-  // Open DevTools in development
+  // Open DevTools in development or to debug production issues
   if (isDev) {
+    mainWindow.webContents.openDevTools();
+  } else {
+    // Open DevTools in production to see what's happening
     mainWindow.webContents.openDevTools();
   }
 
