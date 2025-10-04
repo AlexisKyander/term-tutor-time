@@ -9,7 +9,7 @@ const viteProcess = spawn('npm', ['run', 'dev'], {
 
 // Wait for Vite to start then launch Electron
 setTimeout(() => {
-  const electronProcess = spawn('npx', ['electron', 'public/electron.js'], {
+  const electronProcess = spawn('npx', ['electron', 'public/electron.cjs'], {
     stdio: 'inherit',
     shell: true,
     env: { ...process.env, NODE_ENV: 'development' }

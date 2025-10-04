@@ -16,7 +16,7 @@ buildProcess.on('close', (code) => {
     console.log('Starting Electron app...');
     
     // Start Electron with the built app
-    const electronProcess = spawn('npx', ['electron', 'public/electron.js'], {
+    const electronProcess = spawn('npx', ['electron', 'public/electron.cjs'], {
       stdio: 'inherit',
       shell: true,
       env: { ...process.env, NODE_ENV: 'production' }
