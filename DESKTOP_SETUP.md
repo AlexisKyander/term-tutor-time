@@ -24,13 +24,13 @@ Make sure you have Node.js installed on your computer.
 ### Development Mode
 To run the app in development mode with hot-reload:
 ```bash
-node scripts/electron-dev.js
+node scripts/electron-dev.cjs
 ```
 
 ### Production Mode
 To run the built version:
 ```bash
-node scripts/electron-pack.js
+node scripts/electron-pack.cjs
 ```
 
 ## Features
