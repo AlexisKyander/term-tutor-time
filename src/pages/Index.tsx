@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { VocabularyForm } from "@/components/VocabularyForm";
 import { VocabularyList } from "@/components/VocabularyList";
 import { VocabularyEditForm } from "@/components/VocabularyEditForm";
@@ -9,6 +9,8 @@ import { FolderForm } from "@/components/FolderForm";
 import { DeckForm } from "@/components/DeckForm";
 import { Settings, type StudySettings } from "@/components/Settings";
 import { useToast } from "@/hooks/use-toast";
+import { Download, Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export interface VocabularyItem {
   id: string;
@@ -34,6 +36,8 @@ interface NavigationState {
   editingVocabularyId?: string;
 }
 
+const STORAGE_KEY = 'vocabulary-app-data';
+
 const Index = () => {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [decks, setDecks] = useState<Deck[]>([]);
@@ -45,6 +49,89 @@ const Index = () => {
     almostCorrectRepetitions: 2,
   });
   const { toast } = useToast();
+
+  // Load data from localStorage on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem(STORAGE_KEY);
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        if (parsed.folders) setFolders(parsed.folders.map((f: Folder) => ({ ...f, createdAt: new Date(f.createdAt) })));
+        if (parsed.decks) setDecks(parsed.decks.map((d: Deck) => ({ ...d, createdAt: new Date(d.createdAt) })));
+        if (parsed.vocabulary) setVocabulary(parsed.vocabulary.map((v: VocabularyItem) => ({ ...v, createdAt: new Date(v.createdAt) })));
+        if (parsed.settings) setSettings(parsed.settings);
+      } catch (error) {
+        console.error('Failed to load data from localStorage:', error);
+      }
+    }
+  }, []);
+
+  // Save data to localStorage whenever it changes
+  useEffect(() => {
+    const dataToSave = {
+      folders,
+      decks,
+      vocabulary,
+      settings,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+  }, [folders, decks, vocabulary, settings]);
+
+  const exportData = () => {
+    const dataToExport = {
+      folders,
+      decks,
+      vocabulary,
+      settings,
+      exportedAt: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vocabulary-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast({
+      title: "Data exported",
+      description: "Your vocabulary data has been downloaded as a JSON file",
+    });
+  };
+
+  const importData = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = (e: Event) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const imported = JSON.parse(event.target?.result as string);
+          if (imported.folders) setFolders(imported.folders.map((f: Folder) => ({ ...f, createdAt: new Date(f.createdAt) })));
+          if (imported.decks) setDecks(imported.decks.map((d: Deck) => ({ ...d, createdAt: new Date(d.createdAt) })));
+          if (imported.vocabulary) setVocabulary(imported.vocabulary.map((v: VocabularyItem) => ({ ...v, createdAt: new Date(v.createdAt) })));
+          if (imported.settings) setSettings(imported.settings);
+          toast({
+            title: "Data imported",
+            description: "Your vocabulary data has been successfully imported",
+          });
+        } catch (error) {
+          toast({
+            title: "Import failed",
+            description: "Failed to import data. Please check the file format.",
+            variant: "destructive",
+          });
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
 
   const addFolder = (name: string) => {
     const newFolder: Folder = {
@@ -328,6 +415,18 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-purple-50/30">
       <div className="container mx-auto px-4 py-8">
+        {mode === 'folders' && (
+          <div className="flex gap-2 mb-4 justify-end">
+            <Button variant="outline" size="sm" onClick={importData}>
+              <Upload className="w-4 h-4 mr-2" />
+              Import
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportData}>
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
+          </div>
+        )}
         {renderContent()}
       </div>
     </div>
