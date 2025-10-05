@@ -42,11 +42,8 @@ function createWindow() {
     mainWindow.show();
   });
 
-  // Open DevTools in development or to debug production issues
+  // Open DevTools only in development
   if (isDev) {
-    mainWindow.webContents.openDevTools();
-  } else {
-    // Open DevTools in production to see what's happening
     mainWindow.webContents.openDevTools();
   }
 
