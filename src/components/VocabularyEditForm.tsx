@@ -18,8 +18,6 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
   const [word, setWord] = useState(item.word);
   const [translation, setTranslation] = useState(item.translation);
   const [comment, setComment] = useState(item.comment);
-  const [language, setLanguage] = useState(item.language);
-  const [targetLanguage, setTargetLanguage] = useState(item.targetLanguage);
   const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -39,8 +37,6 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
       word: word.trim(),
       translation: translation.trim(),
       comment: comment.trim(),
-      language,
-      targetLanguage,
     };
 
     onUpdate(updatedItem);
@@ -96,27 +92,6 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
               />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="language">From Language</Label>
-                <Input
-                  id="language"
-                  placeholder="e.g., English"
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="targetLanguage">To Language</Label>
-                <Input
-                  id="targetLanguage"
-                  placeholder="e.g., Spanish"
-                  value={targetLanguage}
-                  onChange={(e) => setTargetLanguage(e.target.value)}
-                />
-              </div>
             </div>
             
             <div className="flex gap-2">

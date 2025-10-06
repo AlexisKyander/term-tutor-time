@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Trash2, BookOpen, Plus, Edit3, TrendingUp } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ArrowLeft, Trash2, BookOpen, Plus, Edit3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export interface VocabularyItem {
@@ -26,9 +27,11 @@ interface VocabularyListProps {
   onBack: () => void;
   deckName: string;
   onAddWord: () => void;
+  fromLanguage: string;
+  toLanguage: string;
 }
 
-export const VocabularyList = ({ vocabulary, onDelete, onEdit, onBack, deckName, onAddWord }: VocabularyListProps) => {
+export const VocabularyList = ({ vocabulary, onDelete, onEdit, onBack, deckName, onAddWord, fromLanguage, toLanguage }: VocabularyListProps) => {
   const { toast } = useToast();
 
   const handleDelete = (item: VocabularyItem) => {
@@ -38,16 +41,6 @@ export const VocabularyList = ({ vocabulary, onDelete, onEdit, onBack, deckName,
       description: `"${item.word}" has been removed from your vocabulary`,
     });
   };
-
-  // Group vocabulary by language pairs
-  const groupedVocabulary = vocabulary.reduce((acc, item) => {
-    const key = `${item.language}-${item.targetLanguage}`;
-    if (!acc[key]) {
-      acc[key] = [];
-    }
-    acc[key].push(item);
-    return acc;
-  }, {} as Record<string, VocabularyItem[]>);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -66,7 +59,7 @@ export const VocabularyList = ({ vocabulary, onDelete, onEdit, onBack, deckName,
         <CardHeader>
           <CardTitle>{deckName} Vocabulary</CardTitle>
           <CardDescription>
-            Manage your vocabulary in this deck ({vocabulary.length} words)
+            {fromLanguage} → {toLanguage} ({vocabulary.length} words)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -80,56 +73,55 @@ export const VocabularyList = ({ vocabulary, onDelete, onEdit, onBack, deckName,
               </Button>
             </div>
           ) : (
-            <div className="space-y-6">
-              {Object.entries(groupedVocabulary).map(([languagePair, items]) => (
-                <div key={languagePair} className="space-y-2">
-                  <h3 className="font-semibold text-lg text-muted-foreground">
-                    {languagePair.replace('-', ' → ')}
-                  </h3>
-                   {items.map((item) => (
-                     <div key={item.id} className="flex items-start justify-between p-4 bg-muted/50 rounded-lg">
-                       <div className="flex-1">
-                         <div className="flex items-center space-x-2 mb-1">
-                           <span className="font-medium text-lg">{item.word}</span>
-                           <span className="text-muted-foreground">→</span>
-                           <span className="text-lg">{item.translation}</span>
-                         </div>
-                         {item.comment && (
-                           <p className="text-sm text-muted-foreground italic mt-1">
-                             {item.comment}
-                           </p>
-                         )}
-                         <div className="flex items-center space-x-4 mt-2 text-xs text-muted-foreground">
-                           <div className="flex items-center space-x-1">
-                             <TrendingUp className="w-3 h-3" />
-                             <span>✓ {item.statistics.correct}</span>
-                             <span>~ {item.statistics.almostCorrect}</span>
-                             <span>✗ {item.statistics.incorrect}</span>
-                           </div>
-                         </div>
-                       </div>
-                       <div className="flex space-x-1">
-                         <Button
-                           variant="ghost"
-                           size="sm"
-                           onClick={() => onEdit(item.id)}
-                           className="text-muted-foreground hover:text-foreground"
-                         >
-                           <Edit3 className="w-4 h-4" />
-                         </Button>
-                         <Button
-                           variant="ghost"
-                           size="sm"
-                           onClick={() => handleDelete(item)}
-                           className="text-destructive hover:text-destructive"
-                         >
-                           <Trash2 className="w-4 h-4" />
-                         </Button>
-                       </div>
-                     </div>
-                   ))}
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{fromLanguage}</TableHead>
+                    <TableHead>{toLanguage}</TableHead>
+                    <TableHead>Comment</TableHead>
+                    <TableHead>Statistics</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {vocabulary.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">{item.word}</TableCell>
+                      <TableCell>{item.translation}</TableCell>
+                      <TableCell className="text-muted-foreground italic">
+                        {item.comment || "-"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-3 text-sm">
+                          <span className="text-green-600">✓ {item.statistics.correct}</span>
+                          <span className="text-yellow-600">~ {item.statistics.almostCorrect}</span>
+                          <span className="text-red-600">✗ {item.statistics.incorrect}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onEdit(item.id)}
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(item)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>

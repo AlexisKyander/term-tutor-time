@@ -8,28 +8,32 @@ import { useToast } from "@/hooks/use-toast";
 
 interface DeckFormProps {
   folderName: string;
-  onAdd: (name: string) => void;
+  onAdd: (name: string, fromLanguage: string, toLanguage: string) => void;
   onBack: () => void;
 }
 
 export const DeckForm = ({ folderName, onAdd, onBack }: DeckFormProps) => {
   const [name, setName] = useState("");
+  const [fromLanguage, setFromLanguage] = useState("English");
+  const [toLanguage, setToLanguage] = useState("Spanish");
   const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim()) {
+    if (!name.trim() || !fromLanguage.trim() || !toLanguage.trim()) {
       toast({
         title: "Error",
-        description: "Please enter a deck name",
+        description: "Please fill in all fields",
         variant: "destructive",
       });
       return;
     }
 
-    onAdd(name.trim());
+    onAdd(name.trim(), fromLanguage.trim(), toLanguage.trim());
     setName("");
+    setFromLanguage("English");
+    setToLanguage("Spanish");
     toast({
       title: "Success!",
       description: "Deck created successfully",
@@ -61,6 +65,27 @@ export const DeckForm = ({ folderName, onAdd, onBack }: DeckFormProps) => {
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="fromLanguage">From Language</Label>
+                <Input
+                  id="fromLanguage"
+                  placeholder="e.g., English"
+                  value={fromLanguage}
+                  onChange={(e) => setFromLanguage(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="toLanguage">To Language</Label>
+                <Input
+                  id="toLanguage"
+                  placeholder="e.g., Spanish"
+                  value={toLanguage}
+                  onChange={(e) => setToLanguage(e.target.value)}
+                />
+              </div>
             </div>
             
             <div className="flex gap-2">

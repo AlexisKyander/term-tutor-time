@@ -161,13 +161,15 @@ const Index = () => {
     });
   };
 
-  const addDeck = (name: string) => {
+  const addDeck = (name: string, fromLanguage: string, toLanguage: string) => {
     if (!navigation.currentFolderId) return;
     
     const newDeck: Deck = {
       id: crypto.randomUUID(),
       name,
       folderId: navigation.currentFolderId,
+      fromLanguage,
+      toLanguage,
       createdAt: new Date(),
     };
     setDecks(prev => [...prev, newDeck]);
@@ -186,10 +188,15 @@ const Index = () => {
     });
   };
 
-  const addVocabulary = (item: Omit<VocabularyItem, 'id' | 'createdAt' | 'statistics'>) => {
+  const addVocabulary = (item: Omit<VocabularyItem, 'id' | 'createdAt' | 'statistics' | 'language' | 'targetLanguage'>) => {
+    const currentDeck = getCurrentDeck();
+    if (!currentDeck) return;
+    
     const newItem: VocabularyItem = {
       ...item,
       id: crypto.randomUUID(),
+      language: currentDeck.fromLanguage,
+      targetLanguage: currentDeck.toLanguage,
       createdAt: new Date(),
       statistics: { correct: 0, almostCorrect: 0, incorrect: 0 },
     };
@@ -331,6 +338,8 @@ const Index = () => {
           <VocabularyList 
             vocabulary={getCurrentVocabulary()}
             deckName={currentDeck.name}
+            fromLanguage={currentDeck.fromLanguage}
+            toLanguage={currentDeck.toLanguage}
             onDelete={deleteVocabulary}
             onEdit={editVocabulary}
             onAddWord={() => setMode('add-word')}

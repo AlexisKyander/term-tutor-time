@@ -6,6 +6,8 @@ export interface Deck {
   id: string;
   name: string;
   folderId: string;
+  fromLanguage: string;
+  toLanguage: string;
   createdAt: Date;
 }
 
@@ -93,6 +95,9 @@ export const DeckList = ({
                           )}
                         </div>
                         <CardDescription>
+                          {deck.fromLanguage} → {deck.toLanguage}
+                        </CardDescription>
+                        <CardDescription className="text-xs">
                           {vocabCount} words
                           {isCompleted && (
                             <span className="text-green-600 ml-2">• All mastered</span>

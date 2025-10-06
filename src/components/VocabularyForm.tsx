@@ -18,7 +18,7 @@ export interface VocabularyItem {
 }
 
 interface VocabularyFormProps {
-  onAdd: (item: { word: string; translation: string; comment: string; language: string; targetLanguage: string; deckId: string }) => void;
+  onAdd: (item: { word: string; translation: string; comment: string; deckId: string }) => void;
   onBack: () => void;
   deckName: string;
   deckId: string;
@@ -28,8 +28,6 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId }: VocabularyFo
   const [word, setWord] = useState("");
   const [translation, setTranslation] = useState("");
   const [comment, setComment] = useState("");
-  const [language, setLanguage] = useState("English");
-  const [targetLanguage, setTargetLanguage] = useState("Spanish");
   const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -48,8 +46,6 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId }: VocabularyFo
       word: word.trim(),
       translation: translation.trim(),
       comment: comment.trim(),
-      language,
-      targetLanguage,
       deckId,
     });
     setWord("");
@@ -107,27 +103,6 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId }: VocabularyFo
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
               />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="language">From Language</Label>
-                <Input
-                  id="language"
-                  placeholder="e.g., English"
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="targetLanguage">To Language</Label>
-                <Input
-                  id="targetLanguage"
-                  placeholder="e.g., Spanish"
-                  value={targetLanguage}
-                  onChange={(e) => setTargetLanguage(e.target.value)}
-                />
-              </div>
             </div>
             
             <div className="flex gap-2">
