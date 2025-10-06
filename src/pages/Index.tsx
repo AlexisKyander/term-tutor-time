@@ -42,17 +42,20 @@ interface NavigationState {
 
 const STORAGE_KEY = 'vocabulary-app-data';
 
+const DEFAULT_SETTINGS: StudySettings = {
+  correctRepetitions: 1,
+  incorrectRepetitions: 2,
+  almostCorrectRepetitions: 2,
+  previewDelay: 3,
+};
+
 const Index = () => {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [decks, setDecks] = useState<Deck[]>([]);
   const [vocabulary, setVocabulary] = useState<VocabularyItem[]>([]);
   const [mode, setMode] = useState<Mode>('folders');
   const [navigation, setNavigation] = useState<NavigationState>({});
-  const [settings, setSettings] = useState<StudySettings>({
-    incorrectRepetitions: 2,
-    almostCorrectRepetitions: 2,
-    previewDelay: 3,
-  });
+  const [settings, setSettings] = useState<StudySettings>(DEFAULT_SETTINGS);
   const { toast } = useToast();
 
   // Load data from localStorage on mount
@@ -64,7 +67,7 @@ const Index = () => {
         if (parsed.folders) setFolders(parsed.folders.map((f: Folder) => ({ ...f, createdAt: new Date(f.createdAt) })));
         if (parsed.decks) setDecks(parsed.decks.map((d: Deck) => ({ ...d, createdAt: new Date(d.createdAt) })));
         if (parsed.vocabulary) setVocabulary(parsed.vocabulary.map((v: VocabularyItem) => ({ ...v, createdAt: new Date(v.createdAt) })));
-        if (parsed.settings) setSettings(parsed.settings);
+        if (parsed.settings) setSettings({ ...DEFAULT_SETTINGS, ...parsed.settings });
       } catch (error) {
         console.error('Failed to load data from localStorage:', error);
       }
@@ -120,7 +123,7 @@ const Index = () => {
           if (imported.folders) setFolders(imported.folders.map((f: Folder) => ({ ...f, createdAt: new Date(f.createdAt) })));
           if (imported.decks) setDecks(imported.decks.map((d: Deck) => ({ ...d, createdAt: new Date(d.createdAt) })));
           if (imported.vocabulary) setVocabulary(imported.vocabulary.map((v: VocabularyItem) => ({ ...v, createdAt: new Date(v.createdAt) })));
-          if (imported.settings) setSettings(imported.settings);
+          if (imported.settings) setSettings({ ...DEFAULT_SETTINGS, ...imported.settings });
           toast({
             title: "Data imported",
             description: "Your vocabulary data has been successfully imported",

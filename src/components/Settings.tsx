@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Settings as SettingsIcon } from "lucide-react";
 
 export interface StudySettings {
+  correctRepetitions: number;
   incorrectRepetitions: number;
   almostCorrectRepetitions: number;
   previewDelay: number;
@@ -42,6 +43,27 @@ export const Settings = ({ settings, onUpdateSettings, onBack }: SettingsProps) 
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="correct">Correct Answer Repetitions</Label>
+            <Select
+              value={settings.correctRepetitions.toString()}
+              onValueChange={(value) => handleSettingChange('correctRepetitions', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">0 times</SelectItem>
+                <SelectItem value="1">1 time</SelectItem>
+                <SelectItem value="2">2 times</SelectItem>
+                <SelectItem value="3">3 times</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              How many extra times to include words previously answered correctly
+            </p>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="incorrect">Incorrect Answer Repetitions</Label>
             <Select

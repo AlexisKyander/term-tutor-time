@@ -33,6 +33,11 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
     vocabulary.forEach(item => {
       // Always include the item once
       studyDeck.push(item);
+
+      // Add repetitions for items with correct answers
+      for (let i = 0; i < item.statistics.correct * settings.correctRepetitions; i++) {
+        studyDeck.push(item);
+      }
       
       // Add repetitions for items with incorrect answers
       for (let i = 0; i < item.statistics.incorrect * settings.incorrectRepetitions; i++) {
@@ -132,6 +137,10 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
     
     vocabulary.forEach(item => {
       studyDeck.push(item);
+
+      for (let i = 0; i < item.statistics.correct * settings.correctRepetitions; i++) {
+        studyDeck.push(item);
+      }
       
       for (let i = 0; i < item.statistics.incorrect * settings.incorrectRepetitions; i++) {
         studyDeck.push(item);
