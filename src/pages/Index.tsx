@@ -513,7 +513,7 @@ const Index = () => {
           <Settings 
             settings={settings}
             onUpdateSettings={setSettings}
-            onBack={() => setMode('folders')}
+            onBack={() => setMode('decks')}
           />
         );
 

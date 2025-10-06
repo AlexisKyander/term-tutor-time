@@ -142,7 +142,7 @@ export const DeckList = ({
                       variant="outline" 
                       onClick={() => onSelectDeck(deck.id)}
                     >
-                      <BookOpen className="w-4 h-4 mr-2" />
+                      <BookOpen className="w-4 h-4 mr-1" />
                       Manage
                     </Button>
                     <Button 
@@ -150,7 +150,7 @@ export const DeckList = ({
                       onClick={() => onStudyDeck(deck.id)}
                       disabled={vocabCount === 0}
                     >
-                      <Brain className="w-4 h-4 mr-2" />
+                      <Brain className="w-4 h-4 mr-1" />
                       Study
                     </Button>
                     <Button 
@@ -159,7 +159,7 @@ export const DeckList = ({
                       onClick={() => onPreviewDeck(deck.id)}
                       disabled={vocabCount === 0}
                     >
-                      <Eye className="w-4 h-4 mr-2" />
+                      <Eye className="w-4 h-4 mr-1" />
                       Preview
                     </Button>
                   </div>
