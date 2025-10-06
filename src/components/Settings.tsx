@@ -115,3 +115,5 @@ export const Settings = ({ settings, onUpdateSettings, onBack }: SettingsProps) 
     </div>
   );
 };
+
+export default Settings;
