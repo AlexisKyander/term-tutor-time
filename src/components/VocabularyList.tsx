@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ArrowLeft, Trash2, BookOpen, Plus, Edit3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -33,13 +35,24 @@ interface VocabularyListProps {
 
 export const VocabularyList = ({ vocabulary, onDelete, onEdit, onBack, deckName, onAddWord, fromLanguage, toLanguage }: VocabularyListProps) => {
   const { toast } = useToast();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<VocabularyItem | null>(null);
 
-  const handleDelete = (item: VocabularyItem) => {
-    onDelete(item.id);
-    toast({
-      title: "Word deleted",
-      description: `"${item.word}" has been removed from your vocabulary`,
-    });
+  const handleDeleteClick = (item: VocabularyItem) => {
+    setItemToDelete(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (itemToDelete) {
+      onDelete(itemToDelete.id);
+      toast({
+        title: "Word deleted",
+        description: `"${itemToDelete.word}" has been removed from your vocabulary`,
+      });
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
+    }
   };
 
   return (
@@ -111,7 +124,7 @@ export const VocabularyList = ({ vocabulary, onDelete, onEdit, onBack, deckName,
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDelete(item)}
+                            onClick={() => handleDeleteClick(item)}
                             className="text-destructive hover:text-destructive"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -126,6 +139,21 @@ export const VocabularyList = ({ vocabulary, onDelete, onEdit, onBack, deckName,
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{itemToDelete?.word}". This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

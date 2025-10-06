@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ArrowLeft, BookOpen, Plus, Trash2, Brain, Settings, CheckCircle, Pencil, Eye } from "lucide-react";
 
 export interface Deck {
@@ -40,7 +42,24 @@ export const DeckList = ({
   onBack,
   onSettings
 }: DeckListProps) => {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deckToDelete, setDeckToDelete] = useState<string | null>(null);
+
+  const handleDeleteClick = (deckId: string) => {
+    setDeckToDelete(deckId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (deckToDelete) {
+      onDeleteDeck(deckToDelete);
+      setDeleteDialogOpen(false);
+      setDeckToDelete(null);
+    }
+  };
+
   return (
+    <>
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -127,7 +146,7 @@ export const DeckList = ({
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onDeleteDeck(deck.id);
+                        handleDeleteClick(deck.id);
                       }}
                       className="opacity-0 group-hover:opacity-100 transition-opacity"
                     >
@@ -172,6 +191,22 @@ export const DeckList = ({
           })}
         </div>
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this deck and all its vocabulary. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+    </>
   );
 };

@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { FolderOpen, Plus, Trash2 } from "lucide-react";
 
 export interface Folder {
@@ -16,7 +18,24 @@ interface FolderListProps {
 }
 
 export const FolderList = ({ folders, onSelectFolder, onAddFolder, onDeleteFolder }: FolderListProps) => {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
+
+  const handleDeleteClick = (folderId: string) => {
+    setFolderToDelete(folderId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (folderToDelete) {
+      onDeleteFolder(folderToDelete);
+      setDeleteDialogOpen(false);
+      setFolderToDelete(null);
+    }
+  };
+
   return (
+    <>
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
         <div>
@@ -64,7 +83,7 @@ export const FolderList = ({ folders, onSelectFolder, onAddFolder, onDeleteFolde
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDeleteFolder(folder.id);
+                      handleDeleteClick(folder.id);
                     }}
                     className="opacity-0 group-hover:opacity-100 transition-opacity"
                   >
@@ -76,6 +95,22 @@ export const FolderList = ({ folders, onSelectFolder, onAddFolder, onDeleteFolde
           ))}
         </div>
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this folder and all its decks and vocabulary. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+    </>
   );
 };
