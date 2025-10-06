@@ -8,6 +8,8 @@ import { DeckList, type Deck } from "@/components/DeckList";
 import { FolderForm } from "@/components/FolderForm";
 import { DeckForm } from "@/components/DeckForm";
 import { Settings, type StudySettings } from "@/components/Settings";
+import { PreviewMode } from "@/components/PreviewMode";
+import { DirectionSelector } from "@/components/DirectionSelector";
 import { useToast } from "@/hooks/use-toast";
 import { Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,13 +30,14 @@ export interface VocabularyItem {
   };
 }
 
-type Mode = 'folders' | 'add-folder' | 'decks' | 'add-deck' | 'edit-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'study' | 'settings';
+type Mode = 'folders' | 'add-folder' | 'decks' | 'add-deck' | 'edit-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'study' | 'preview' | 'settings' | 'direction-selector' | 'direction-selector-preview';
 
 interface NavigationState {
   currentFolderId?: string;
   currentDeckId?: string;
   editingDeckId?: string;
   editingVocabularyId?: string;
+  studyDirection?: 'forward' | 'reverse';
 }
 
 const STORAGE_KEY = 'vocabulary-app-data';
@@ -48,6 +51,7 @@ const Index = () => {
   const [settings, setSettings] = useState<StudySettings>({
     incorrectRepetitions: 2,
     almostCorrectRepetitions: 2,
+    previewDelay: 3,
   });
   const { toast } = useToast();
 
@@ -263,7 +267,22 @@ const Index = () => {
 
   const studyDeck = (deckId: string) => {
     setNavigation(prev => ({ ...prev, currentDeckId: deckId }));
+    setMode('direction-selector');
+  };
+
+  const previewDeck = (deckId: string) => {
+    setNavigation(prev => ({ ...prev, currentDeckId: deckId }));
+    setMode('direction-selector-preview');
+  };
+
+  const handleDirectionSelect = (direction: 'forward' | 'reverse') => {
+    setNavigation(prev => ({ ...prev, studyDirection: direction }));
     setMode('study');
+  };
+
+  const handlePreviewDirectionSelect = (direction: 'forward' | 'reverse') => {
+    setNavigation(prev => ({ ...prev, studyDirection: direction }));
+    setMode('preview');
   };
 
   const getCurrentFolder = () => {
@@ -325,6 +344,7 @@ const Index = () => {
             onDeleteDeck={deleteDeck}
             onEditDeck={editDeck}
             onStudyDeck={studyDeck}
+            onPreviewDeck={previewDeck}
             onBack={() => setMode('folders')}
             onSettings={() => setMode('settings')}
           />
@@ -417,11 +437,43 @@ const Index = () => {
         );
       }
 
+      case 'direction-selector': {
+        const currentDeck = getCurrentDeck();
+        if (!currentDeck) {
+          setMode('decks');
+          return null;
+        }
+        return (
+          <DirectionSelector
+            fromLanguage={currentDeck.fromLanguage}
+            toLanguage={currentDeck.toLanguage}
+            onSelect={handleDirectionSelect}
+            onCancel={() => setMode('decks')}
+          />
+        );
+      }
+
+      case 'direction-selector-preview': {
+        const currentDeck = getCurrentDeck();
+        if (!currentDeck) {
+          setMode('decks');
+          return null;
+        }
+        return (
+          <DirectionSelector
+            fromLanguage={currentDeck.fromLanguage}
+            toLanguage={currentDeck.toLanguage}
+            onSelect={handlePreviewDirectionSelect}
+            onCancel={() => setMode('decks')}
+          />
+        );
+      }
+
       case 'study': {
         const currentDeck = getCurrentDeck();
         const vocabItems = getCurrentVocabulary();
         
-        if (!currentDeck) {
+        if (!currentDeck || !navigation.studyDirection) {
           setMode('decks');
           return null;
         }
@@ -430,8 +482,28 @@ const Index = () => {
           <FlashcardMode 
             vocabulary={vocabItems}
             settings={settings}
+            direction={navigation.studyDirection}
             onBack={() => setMode('decks')}
             onUpdateStatistics={updateVocabularyStatistics}
+          />
+        );
+      }
+
+      case 'preview': {
+        const currentDeck = getCurrentDeck();
+        const vocabItems = getCurrentVocabulary();
+        
+        if (!currentDeck || !navigation.studyDirection) {
+          setMode('decks');
+          return null;
+        }
+        
+        return (
+          <PreviewMode 
+            vocabulary={vocabItems}
+            settings={settings}
+            direction={navigation.studyDirection}
+            onBack={() => setMode('decks')}
           />
         );
       }

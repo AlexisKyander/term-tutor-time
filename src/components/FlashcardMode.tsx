@@ -13,9 +13,10 @@ interface FlashcardModeProps {
   settings: StudySettings;
   onBack: () => void;
   onUpdateStatistics: (vocabularyId: string, result: 'correct' | 'almostCorrect' | 'incorrect') => void;
+  direction: 'forward' | 'reverse';
 }
 
-export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics }: FlashcardModeProps) => {
+export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics, direction }: FlashcardModeProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState("");
   const [showResult, setShowResult] = useState(false);
@@ -80,7 +81,8 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
     if (!userAnswer.trim()) return;
     
     const normalizedAnswer = normalizeText(userAnswer);
-    const normalizedCorrect = normalizeText(currentCard.translation);
+    const correctAnswer = direction === 'forward' ? currentCard.translation : currentCard.word;
+    const normalizedCorrect = normalizeText(correctAnswer);
     const correct = normalizedAnswer === normalizedCorrect;
     
     let isAlmostCorrect = false;
@@ -232,15 +234,17 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
         <CardContent className="w-full text-center space-y-8">
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground uppercase tracking-wider">
-              {currentCard.language}
+              {direction === 'forward' ? currentCard.language : currentCard.targetLanguage}
             </p>
-            <h2 className="text-4xl font-bold">{currentCard.word}</h2>
+            <h2 className="text-4xl font-bold">
+              {direction === 'forward' ? currentCard.word : currentCard.translation}
+            </h2>
           </div>
 
           <div className="space-y-6">
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground uppercase tracking-wider">
-                Translate to {currentCard.targetLanguage}
+                Translate to {direction === 'forward' ? currentCard.targetLanguage : currentCard.language}
               </p>
               <Input
                 value={userAnswer}
@@ -282,7 +286,9 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                   {!isCorrect && (
                     <p className="text-center">
                       <span className="text-muted-foreground">Correct answer: </span>
-                      <span className="font-semibold">{currentCard.translation}</span>
+                      <span className="font-semibold">
+                        {direction === 'forward' ? currentCard.translation : currentCard.word}
+                      </span>
                     </p>
                   )}
                 </div>

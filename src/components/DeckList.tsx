@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, BookOpen, Plus, Trash2, Brain, Settings, CheckCircle, Pencil } from "lucide-react";
+import { ArrowLeft, BookOpen, Plus, Trash2, Brain, Settings, CheckCircle, Pencil, Eye } from "lucide-react";
 
 export interface Deck {
   id: string;
@@ -21,6 +21,7 @@ interface DeckListProps {
   onDeleteDeck: (id: string) => void;
   onEditDeck: (id: string) => void;
   onStudyDeck: (deckId: string) => void;
+  onPreviewDeck: (deckId: string) => void;
   onBack: () => void;
   onSettings: () => void;
 }
@@ -34,7 +35,8 @@ export const DeckList = ({
   onAddDeck, 
   onDeleteDeck,
   onEditDeck, 
-  onStudyDeck, 
+  onStudyDeck,
+  onPreviewDeck, 
   onBack,
   onSettings
 }: DeckListProps) => {
@@ -134,12 +136,11 @@ export const DeckList = ({
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="flex space-x-2">
+                  <div className="grid grid-cols-3 gap-2">
                     <Button 
                       size="sm" 
                       variant="outline" 
                       onClick={() => onSelectDeck(deck.id)}
-                      className="flex-1"
                     >
                       <BookOpen className="w-4 h-4 mr-2" />
                       Manage
@@ -148,10 +149,18 @@ export const DeckList = ({
                       size="sm" 
                       onClick={() => onStudyDeck(deck.id)}
                       disabled={vocabCount === 0}
-                      className="flex-1"
                     >
                       <Brain className="w-4 h-4 mr-2" />
                       Study
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => onPreviewDeck(deck.id)}
+                      disabled={vocabCount === 0}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Preview
                     </Button>
                   </div>
                 </CardContent>
