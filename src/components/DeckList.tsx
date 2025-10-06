@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, BookOpen, Plus, Trash2, Brain, Settings, CheckCircle } from "lucide-react";
+import { ArrowLeft, BookOpen, Plus, Trash2, Brain, Settings, CheckCircle, Pencil } from "lucide-react";
 
 export interface Deck {
   id: string;
@@ -19,6 +19,7 @@ interface DeckListProps {
   onSelectDeck: (deckId: string) => void;
   onAddDeck: () => void;
   onDeleteDeck: (id: string) => void;
+  onEditDeck: (id: string) => void;
   onStudyDeck: (deckId: string) => void;
   onBack: () => void;
   onSettings: () => void;
@@ -31,7 +32,8 @@ export const DeckList = ({
   deckCompletionStatus,
   onSelectDeck, 
   onAddDeck, 
-  onDeleteDeck, 
+  onDeleteDeck,
+  onEditDeck, 
   onStudyDeck, 
   onBack,
   onSettings
@@ -44,9 +46,11 @@ export const DeckList = ({
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Folders
           </Button>
-          <div>
-            <h2 className="text-2xl font-bold">{folderName}</h2>
-            <p className="text-muted-foreground">Vocabulary decks in this folder</p>
+          <div className="flex items-center gap-3">
+            <div>
+              <h2 className="text-2xl font-bold">{folderName}</h2>
+              <p className="text-muted-foreground">Vocabulary decks in this folder</p>
+            </div>
           </div>
         </div>
         <div className="flex space-x-2">
@@ -93,6 +97,17 @@ export const DeckList = ({
                           {isCompleted && (
                             <CheckCircle className="w-4 h-4 text-green-600" />
                           )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEditDeck(deck.id);
+                            }}
+                            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </Button>
                         </div>
                         <CardDescription>
                           {deck.fromLanguage} → {deck.toLanguage}

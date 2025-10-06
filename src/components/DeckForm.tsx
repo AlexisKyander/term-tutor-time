@@ -8,15 +8,18 @@ import { useToast } from "@/hooks/use-toast";
 
 interface DeckFormProps {
   folderName: string;
+  editingDeck?: { id: string; name: string; fromLanguage: string; toLanguage: string };
   onAdd: (name: string, fromLanguage: string, toLanguage: string) => void;
+  onUpdate?: (id: string, name: string, fromLanguage: string, toLanguage: string) => void;
   onBack: () => void;
 }
 
-export const DeckForm = ({ folderName, onAdd, onBack }: DeckFormProps) => {
-  const [name, setName] = useState("");
-  const [fromLanguage, setFromLanguage] = useState("English");
-  const [toLanguage, setToLanguage] = useState("Spanish");
+export const DeckForm = ({ folderName, editingDeck, onAdd, onUpdate, onBack }: DeckFormProps) => {
+  const [name, setName] = useState(editingDeck?.name || "");
+  const [fromLanguage, setFromLanguage] = useState(editingDeck?.fromLanguage || "English");
+  const [toLanguage, setToLanguage] = useState(editingDeck?.toLanguage || "Spanish");
   const { toast } = useToast();
+  const isEditing = !!editingDeck;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,14 +33,25 @@ export const DeckForm = ({ folderName, onAdd, onBack }: DeckFormProps) => {
       return;
     }
 
-    onAdd(name.trim(), fromLanguage.trim(), toLanguage.trim());
-    setName("");
-    setFromLanguage("English");
-    setToLanguage("Spanish");
-    toast({
-      title: "Success!",
-      description: "Deck created successfully",
-    });
+    if (isEditing && editingDeck && onUpdate) {
+      onUpdate(editingDeck.id, name.trim(), fromLanguage.trim(), toLanguage.trim());
+      toast({
+        title: "Success!",
+        description: "Deck updated successfully",
+      });
+    } else {
+      onAdd(name.trim(), fromLanguage.trim(), toLanguage.trim());
+      toast({
+        title: "Success!",
+        description: "Deck created successfully",
+      });
+    }
+    
+    if (!isEditing) {
+      setName("");
+      setFromLanguage("English");
+      setToLanguage("Spanish");
+    }
   };
 
   return (
@@ -49,9 +63,9 @@ export const DeckForm = ({ folderName, onAdd, onBack }: DeckFormProps) => {
       
       <Card>
         <CardHeader>
-          <CardTitle>Create New Deck</CardTitle>
+          <CardTitle>{isEditing ? 'Edit Deck' : 'Create New Deck'}</CardTitle>
           <CardDescription>
-            Create a deck in {folderName} to organize your vocabulary
+            {isEditing ? 'Update deck settings' : `Create a deck in ${folderName} to organize your vocabulary`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -90,7 +104,7 @@ export const DeckForm = ({ folderName, onAdd, onBack }: DeckFormProps) => {
             
             <div className="flex gap-2">
               <Button type="submit" className="flex-1">
-                Create Deck
+                {isEditing ? 'Update Deck' : 'Create Deck'}
               </Button>
               <Button type="button" variant="outline" onClick={onBack}>
                 Cancel

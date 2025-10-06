@@ -28,11 +28,12 @@ export interface VocabularyItem {
   };
 }
 
-type Mode = 'folders' | 'add-folder' | 'decks' | 'add-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'study' | 'settings';
+type Mode = 'folders' | 'add-folder' | 'decks' | 'add-deck' | 'edit-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'study' | 'settings';
 
 interface NavigationState {
   currentFolderId?: string;
   currentDeckId?: string;
+  editingDeckId?: string;
   editingVocabularyId?: string;
 }
 
@@ -176,6 +177,17 @@ const Index = () => {
     setMode('decks');
   };
 
+  const updateDeck = (id: string, name: string, fromLanguage: string, toLanguage: string) => {
+    setDecks(prev => prev.map(deck => 
+      deck.id === id ? { ...deck, name, fromLanguage, toLanguage } : deck
+    ));
+    setMode('decks');
+    toast({
+      title: "Deck updated",
+      description: "Deck settings have been updated",
+    });
+  };
+
   const deleteDeck = (id: string) => {
     const relatedVocab = vocabulary.filter(item => item.deckId === id);
     
@@ -186,6 +198,11 @@ const Index = () => {
       title: "Deck deleted",
       description: `Deleted deck with ${relatedVocab.length} words`,
     });
+  };
+
+  const editDeck = (id: string) => {
+    setNavigation(prev => ({ ...prev, editingDeckId: id }));
+    setMode('edit-deck');
   };
 
   const addVocabulary = (item: Omit<VocabularyItem, 'id' | 'createdAt' | 'statistics' | 'language' | 'targetLanguage'>) => {
@@ -306,6 +323,7 @@ const Index = () => {
             onSelectDeck={selectDeck}
             onAddDeck={() => setMode('add-deck')}
             onDeleteDeck={deleteDeck}
+            onEditDeck={editDeck}
             onStudyDeck={studyDeck}
             onBack={() => setMode('folders')}
             onSettings={() => setMode('settings')}
@@ -323,6 +341,24 @@ const Index = () => {
           <DeckForm 
             folderName={currentFolder.name}
             onAdd={addDeck}
+            onBack={() => setMode('decks')}
+          />
+        );
+      }
+
+      case 'edit-deck': {
+        const currentFolder = getCurrentFolder();
+        const editingDeck = decks.find(d => d.id === navigation.editingDeckId);
+        if (!currentFolder || !editingDeck) {
+          setMode('decks');
+          return null;
+        }
+        return (
+          <DeckForm 
+            folderName={currentFolder.name}
+            editingDeck={editingDeck}
+            onAdd={addDeck}
+            onUpdate={updateDeck}
             onBack={() => setMode('decks')}
           />
         );
