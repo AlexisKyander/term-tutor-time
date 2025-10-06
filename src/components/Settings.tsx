@@ -108,30 +108,6 @@ export const Settings = ({ settings, onUpdateSettings, onBack }: SettingsProps) 
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="previewDelay">Preview Mode Delay</Label>
-            <Select
-              value={settings.previewDelay.toString()}
-              onValueChange={(value) => handleSettingChange('previewDelay', value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1 second</SelectItem>
-                <SelectItem value="2">2 seconds</SelectItem>
-                <SelectItem value="3">3 seconds</SelectItem>
-                <SelectItem value="4">4 seconds</SelectItem>
-                <SelectItem value="5">5 seconds</SelectItem>
-                <SelectItem value="6">6 seconds</SelectItem>
-                <SelectItem value="7">7 seconds</SelectItem>
-                <SelectItem value="8">8 seconds</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground">
-              How long to wait before showing the translation in preview mode
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>
