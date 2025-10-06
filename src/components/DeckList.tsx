@@ -56,8 +56,8 @@ export const DeckList = ({
           </div>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" onClick={onSettings}>
-            <Settings className="w-4 h-4 mr-2" />
+          <Button variant="outline" onClick={onSettings} className="gap-1">
+            <Settings className="w-3 h-3" />
             Settings
           </Button>
           <Button onClick={onAddDeck}>
@@ -140,26 +140,29 @@ export const DeckList = ({
                     <Button 
                       size="sm" 
                       variant="outline" 
+                      className="gap-1"
                       onClick={() => onSelectDeck(deck.id)}
                     >
-                      <BookOpen className="w-4 h-4 mr-1" />
+                      <BookOpen className="w-3 h-3" />
                       Manage
                     </Button>
                     <Button 
                       size="sm" 
+                      className="gap-1"
                       onClick={() => onStudyDeck(deck.id)}
                       disabled={vocabCount === 0}
                     >
-                      <Brain className="w-4 h-4 mr-1" />
+                      <Brain className="w-3 h-3" />
                       Study
                     </Button>
                     <Button 
                       size="sm" 
                       variant="outline"
+                      className="gap-1"
                       onClick={() => onPreviewDeck(deck.id)}
                       disabled={vocabCount === 0}
                     >
-                      <Eye className="w-4 h-4 mr-1" />
+                      <Eye className="w-3 h-3" />
                       Preview
                     </Button>
                   </div>

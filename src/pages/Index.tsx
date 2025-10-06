@@ -7,7 +7,7 @@ import { FolderList, type Folder } from "@/components/FolderList";
 import { DeckList, type Deck } from "@/components/DeckList";
 import { FolderForm } from "@/components/FolderForm";
 import { DeckForm } from "@/components/DeckForm";
-import { Settings, type StudySettings } from "@/components/Settings";
+import { Settings as SettingsView, type StudySettings } from "@/components/Settings";
 import { PreviewMode } from "@/components/PreviewMode";
 import { DirectionSelector } from "@/components/DirectionSelector";
 import { useToast } from "@/hooks/use-toast";
@@ -510,7 +510,7 @@ const Index = () => {
 
       case 'settings':
         return (
-          <Settings 
+          <SettingsView 
             settings={settings}
             onUpdateSettings={setSettings}
             onBack={() => setMode('decks')}
