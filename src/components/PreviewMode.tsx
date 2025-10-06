@@ -34,6 +34,10 @@ export const PreviewMode = ({ vocabulary, delay, order, onBack }: PreviewModePro
     }
   }, [currentIndex, showTranslation, delay, orderedVocabulary.length, sessionComplete]);
 
+  const handleShowAnswer = () => {
+    setShowTranslation(true);
+  };
+
   const currentCard = orderedVocabulary[currentIndex];
   const progress = ((currentIndex + 1) / orderedVocabulary.length) * 100;
 
@@ -169,8 +173,13 @@ export const PreviewMode = ({ vocabulary, delay, order, onBack }: PreviewModePro
           )}
 
           {!showTranslation && (
-            <div className="text-sm text-muted-foreground">
-              Translation will appear in {delay} seconds...
+            <div className="space-y-4">
+              <div className="text-sm text-muted-foreground">
+                Translation will appear in {delay} seconds...
+              </div>
+              <Button onClick={handleShowAnswer} variant="outline" size="lg">
+                Show Answer
+              </Button>
             </div>
           )}
         </CardContent>
