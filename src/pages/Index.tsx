@@ -10,6 +10,7 @@ import { DeckForm } from "@/components/DeckForm";
 import SettingsView, { type StudySettings } from "@/components/Settings";
 import { PreviewMode } from "@/components/PreviewMode";
 import { DirectionSelector } from "@/components/DirectionSelector";
+import { PreviewOptions } from "@/components/PreviewOptions";
 import { useToast } from "@/hooks/use-toast";
 import { Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,7 @@ export interface VocabularyItem {
   };
 }
 
-type Mode = 'folders' | 'add-folder' | 'decks' | 'add-deck' | 'edit-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'study' | 'preview' | 'settings' | 'direction-selector' | 'direction-selector-preview';
+type Mode = 'folders' | 'add-folder' | 'decks' | 'add-deck' | 'edit-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'study' | 'preview' | 'settings' | 'direction-selector' | 'preview-options';
 
 interface NavigationState {
   currentFolderId?: string;
@@ -38,6 +39,8 @@ interface NavigationState {
   editingDeckId?: string;
   editingVocabularyId?: string;
   studyDirection?: 'forward' | 'reverse';
+  previewDelay?: number;
+  previewOrder?: 'original' | 'random';
 }
 
 const STORAGE_KEY = 'vocabulary-app-data';
@@ -46,7 +49,6 @@ const DEFAULT_SETTINGS: StudySettings = {
   correctRepetitions: 1,
   incorrectRepetitions: 2,
   almostCorrectRepetitions: 2,
-  previewDelay: 3,
 };
 
 const Index = () => {
@@ -275,7 +277,7 @@ const Index = () => {
 
   const previewDeck = (deckId: string) => {
     setNavigation(prev => ({ ...prev, currentDeckId: deckId }));
-    setMode('direction-selector-preview');
+    setMode('preview-options');
   };
 
   const handleDirectionSelect = (direction: 'forward' | 'reverse') => {
@@ -283,8 +285,8 @@ const Index = () => {
     setMode('study');
   };
 
-  const handlePreviewDirectionSelect = (direction: 'forward' | 'reverse') => {
-    setNavigation(prev => ({ ...prev, studyDirection: direction }));
+  const handlePreviewOptionsSelect = (delay: number, order: 'original' | 'random') => {
+    setNavigation(prev => ({ ...prev, previewDelay: delay, previewOrder: order }));
     setMode('preview');
   };
 
@@ -456,17 +458,15 @@ const Index = () => {
         );
       }
 
-      case 'direction-selector-preview': {
+      case 'preview-options': {
         const currentDeck = getCurrentDeck();
         if (!currentDeck) {
           setMode('decks');
           return null;
         }
         return (
-          <DirectionSelector
-            fromLanguage={currentDeck.fromLanguage}
-            toLanguage={currentDeck.toLanguage}
-            onSelect={handlePreviewDirectionSelect}
+          <PreviewOptions
+            onStart={handlePreviewOptionsSelect}
             onCancel={() => setMode('decks')}
           />
         );
@@ -496,7 +496,7 @@ const Index = () => {
         const currentDeck = getCurrentDeck();
         const vocabItems = getCurrentVocabulary();
         
-        if (!currentDeck || !navigation.studyDirection) {
+        if (!currentDeck) {
           setMode('decks');
           return null;
         }
@@ -504,8 +504,8 @@ const Index = () => {
         return (
           <PreviewMode 
             vocabulary={vocabItems}
-            settings={settings}
-            direction={navigation.studyDirection}
+            delay={navigation.previewDelay || 3}
+            order={navigation.previewOrder || 'random'}
             onBack={() => setMode('decks')}
           />
         );

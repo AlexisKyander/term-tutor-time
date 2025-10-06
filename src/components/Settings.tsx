@@ -8,7 +8,6 @@ export interface StudySettings {
   correctRepetitions: number;
   incorrectRepetitions: number;
   almostCorrectRepetitions: number;
-  previewDelay: number;
 }
 
 interface SettingsProps {

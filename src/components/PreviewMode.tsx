@@ -1,44 +1,44 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, RotateCcw } from "lucide-react";
 import { VocabularyItem } from "@/pages/Index";
-import { StudySettings } from "@/components/Settings";
 
 interface PreviewModeProps {
   vocabulary: VocabularyItem[];
-  settings: StudySettings;
+  delay: number;
+  order: 'original' | 'random';
   onBack: () => void;
-  direction: 'forward' | 'reverse';
 }
 
-export const PreviewMode = ({ vocabulary, settings, onBack, direction }: PreviewModeProps) => {
+export const PreviewMode = ({ vocabulary, delay, order, onBack }: PreviewModeProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showTranslation, setShowTranslation] = useState(false);
-  const [shuffledVocabulary, setShuffledVocabulary] = useState<VocabularyItem[]>([]);
   const [sessionComplete, setSessionComplete] = useState(false);
 
-  useEffect(() => {
-    const shuffled = [...vocabulary].sort(() => Math.random() - 0.5);
-    setShuffledVocabulary(shuffled);
-  }, [vocabulary]);
+  const orderedVocabulary = useMemo(() => {
+    if (order === 'random') {
+      return [...vocabulary].sort(() => Math.random() - 0.5);
+    }
+    return vocabulary;
+  }, [vocabulary, order]);
 
   useEffect(() => {
-    if (shuffledVocabulary.length > 0 && !showTranslation && !sessionComplete) {
+    if (orderedVocabulary.length > 0 && !showTranslation && !sessionComplete) {
       const timer = setTimeout(() => {
         setShowTranslation(true);
-      }, settings.previewDelay * 1000);
+      }, delay * 1000);
 
       return () => clearTimeout(timer);
     }
-  }, [currentIndex, showTranslation, settings.previewDelay, shuffledVocabulary.length, sessionComplete]);
+  }, [currentIndex, showTranslation, delay, orderedVocabulary.length, sessionComplete]);
 
-  const currentCard = shuffledVocabulary[currentIndex];
-  const progress = ((currentIndex + 1) / shuffledVocabulary.length) * 100;
+  const currentCard = orderedVocabulary[currentIndex];
+  const progress = ((currentIndex + 1) / orderedVocabulary.length) * 100;
 
   const nextCard = () => {
-    if (currentIndex < shuffledVocabulary.length - 1) {
+    if (currentIndex < orderedVocabulary.length - 1) {
       setCurrentIndex(prev => prev + 1);
       setShowTranslation(false);
     } else {
@@ -47,8 +47,6 @@ export const PreviewMode = ({ vocabulary, settings, onBack, direction }: Preview
   };
 
   const resetSession = () => {
-    const shuffled = [...vocabulary].sort(() => Math.random() - 0.5);
-    setShuffledVocabulary(shuffled);
     setCurrentIndex(0);
     setShowTranslation(false);
     setSessionComplete(false);
@@ -65,7 +63,7 @@ export const PreviewMode = ({ vocabulary, settings, onBack, direction }: Preview
   useEffect(() => {
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [showTranslation, currentIndex, shuffledVocabulary.length]);
+  }, [showTranslation, currentIndex, orderedVocabulary.length]);
 
   if (!currentCard && !sessionComplete) {
     return (
@@ -94,7 +92,7 @@ export const PreviewMode = ({ vocabulary, settings, onBack, direction }: Preview
               <div>
                 <h2 className="text-3xl font-bold mb-2">Preview Complete!</h2>
                 <p className="text-xl text-muted-foreground">
-                  You reviewed {shuffledVocabulary.length} words
+                  You reviewed {orderedVocabulary.length} words
                 </p>
               </div>
               <div className="flex gap-4 justify-center">
@@ -113,10 +111,10 @@ export const PreviewMode = ({ vocabulary, settings, onBack, direction }: Preview
     );
   }
 
-  const displayWord = direction === 'forward' ? currentCard.word : currentCard.translation;
-  const displayTranslation = direction === 'forward' ? currentCard.translation : currentCard.word;
-  const displayLanguage = direction === 'forward' ? currentCard.language : currentCard.targetLanguage;
-  const displayTargetLanguage = direction === 'forward' ? currentCard.targetLanguage : currentCard.language;
+  const displayWord = currentCard.word;
+  const displayTranslation = currentCard.translation;
+  const displayLanguage = currentCard.language;
+  const displayTargetLanguage = currentCard.targetLanguage;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -126,7 +124,7 @@ export const PreviewMode = ({ vocabulary, settings, onBack, direction }: Preview
           Back to Overview
         </Button>
         <div className="text-sm text-muted-foreground">
-          {currentIndex + 1} of {shuffledVocabulary.length}
+          {currentIndex + 1} of {orderedVocabulary.length}
         </div>
       </div>
 
@@ -165,14 +163,14 @@ export const PreviewMode = ({ vocabulary, settings, onBack, direction }: Preview
               )}
 
               <Button onClick={nextCard} size="lg" className="w-full max-w-48">
-                {currentIndex < shuffledVocabulary.length - 1 ? 'Next Word' : 'Finish'}
+                {currentIndex < orderedVocabulary.length - 1 ? 'Next Word' : 'Finish'}
               </Button>
             </div>
           )}
 
           {!showTranslation && (
             <div className="text-sm text-muted-foreground">
-              Translation will appear in {settings.previewDelay} seconds...
+              Translation will appear in {delay} seconds...
             </div>
           )}
         </CardContent>
