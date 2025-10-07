@@ -53,7 +53,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
     // Shuffle the study deck
     const shuffled = studyDeck.sort(() => Math.random() - 0.5);
     setShuffledVocabulary(shuffled);
-  }, [vocabulary, settings]);
+  }, []);
 
   const currentCard = shuffledVocabulary[currentIndex];
   const progress = ((currentIndex + 1) / shuffledVocabulary.length) * 100;
