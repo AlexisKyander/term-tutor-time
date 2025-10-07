@@ -292,8 +292,12 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                       {isCorrect ? 'Correct!' : (window as any).isAlmostCorrect ? 'Almost correct!' : 'Incorrect'}
                     </span>
                   </div>
+                  <p className="text-center">
+                    <span className="text-muted-foreground">Your answer: </span>
+                    <span className="font-semibold">{userAnswer}</span>
+                  </p>
                   {!isCorrect && (
-                    <p className="text-center">
+                    <p className="text-center mt-2">
                       <span className="text-muted-foreground">Correct answer: </span>
                       <span className="font-semibold">
                         {direction === 'forward' ? currentCard.translation : currentCard.word}
