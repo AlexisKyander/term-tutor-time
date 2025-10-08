@@ -27,28 +27,8 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   const { toast } = useToast();
 
   useEffect(() => {
-    // Create study deck with repetitions based on settings
-    const studyDeck: VocabularyItem[] = [];
-    
-    vocabulary.forEach(item => {
-      // Always include the item once
-      studyDeck.push(item);
-
-      // Add repetitions for items with correct answers
-      for (let i = 0; i < item.statistics.correct * settings.correctRepetitions; i++) {
-        studyDeck.push(item);
-      }
-      
-      // Add repetitions for items with incorrect answers
-      for (let i = 0; i < item.statistics.incorrect * settings.incorrectRepetitions; i++) {
-        studyDeck.push(item);
-      }
-      
-      // Add repetitions for items with almost correct answers
-      for (let i = 0; i < item.statistics.almostCorrect * settings.almostCorrectRepetitions; i++) {
-        studyDeck.push(item);
-      }
-    });
+    // Create study deck - each word appears once at the start of each session
+    const studyDeck: VocabularyItem[] = [...vocabulary];
     
     // Shuffle the study deck
     const shuffled = studyDeck.sort(() => Math.random() - 0.5);
@@ -132,24 +112,8 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   };
 
   const resetSession = () => {
-    // Recreate study deck with current statistics
-    const studyDeck: VocabularyItem[] = [];
-    
-    vocabulary.forEach(item => {
-      studyDeck.push(item);
-
-      for (let i = 0; i < item.statistics.correct * settings.correctRepetitions; i++) {
-        studyDeck.push(item);
-      }
-      
-      for (let i = 0; i < item.statistics.incorrect * settings.incorrectRepetitions; i++) {
-        studyDeck.push(item);
-      }
-      
-      for (let i = 0; i < item.statistics.almostCorrect * settings.almostCorrectRepetitions; i++) {
-        studyDeck.push(item);
-      }
-    });
+    // Recreate study deck - fresh start for each session
+    const studyDeck: VocabularyItem[] = [...vocabulary];
     
     const shuffled = studyDeck.sort(() => Math.random() - 0.5);
     setShuffledVocabulary(shuffled);
