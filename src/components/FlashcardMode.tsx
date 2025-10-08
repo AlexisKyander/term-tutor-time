@@ -24,6 +24,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   const [shuffledVocabulary, setShuffledVocabulary] = useState<VocabularyItem[]>([]);
   const [score, setScore] = useState({ correct: 0, total: 0 });
   const [sessionComplete, setSessionComplete] = useState(false);
+  const [repetitionCount, setRepetitionCount] = useState<Record<string, { incorrect: number, almostCorrect: number }>>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -98,6 +99,44 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   };
 
   const nextCard = () => {
+    // Check if we need to add the current card back to the deck
+    if (showResult && !isCorrect) {
+      const cardId = currentCard.id;
+      const currentReps = repetitionCount[cardId] || { incorrect: 0, almostCorrect: 0 };
+      const isAlmostCorrect = (window as any).isAlmostCorrect;
+      
+      let shouldRepeat = false;
+      
+      if (isAlmostCorrect && currentReps.almostCorrect < settings.almostCorrectRepetitions) {
+        shouldRepeat = true;
+        setRepetitionCount(prev => ({
+          ...prev,
+          [cardId]: { ...currentReps, almostCorrect: currentReps.almostCorrect + 1 }
+        }));
+      } else if (!isAlmostCorrect && currentReps.incorrect < settings.incorrectRepetitions) {
+        shouldRepeat = true;
+        setRepetitionCount(prev => ({
+          ...prev,
+          [cardId]: { ...currentReps, incorrect: currentReps.incorrect + 1 }
+        }));
+      }
+      
+      if (shouldRepeat) {
+        // Add card back to deck at a random position after current index
+        setShuffledVocabulary(prev => {
+          const remaining = prev.slice(currentIndex + 1);
+          const randomIndex = Math.floor(Math.random() * (remaining.length + 1));
+          const newDeck = [
+            ...prev.slice(0, currentIndex + 1),
+            ...remaining.slice(0, randomIndex),
+            currentCard,
+            ...remaining.slice(randomIndex)
+          ];
+          return newDeck;
+        });
+      }
+    }
+    
     if (currentIndex < shuffledVocabulary.length - 1) {
       setCurrentIndex(prev => prev + 1);
       setUserAnswer("");
@@ -122,6 +161,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
     setShowResult(false);
     setScore({ correct: 0, total: 0 });
     setSessionComplete(false);
+    setRepetitionCount({});
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
