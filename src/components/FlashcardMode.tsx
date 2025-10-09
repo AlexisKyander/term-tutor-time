@@ -66,17 +66,33 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   const checkAnswer = () => {
     if (!userAnswer.trim()) return;
     
-    const normalizedAnswer = normalizeText(userAnswer);
     const correctAnswer = direction === 'forward' ? currentCard.translation : currentCard.word;
-    const normalizedCorrect = normalizeText(correctAnswer);
-    const correct = normalizedAnswer === normalizedCorrect;
+    
+    // Split by "/" to handle multiple valid answers
+    const validAnswers = correctAnswer.split('/').map(ans => normalizeText(ans));
+    const userAnswers = userAnswer.split('/').map(ans => normalizeText(ans));
+    
+    // Check if all user answers are valid (match at least one correct answer)
+    const allUserAnswersValid = userAnswers.every(userAns => 
+      validAnswers.some(validAns => userAns === validAns)
+    );
+    
+    const correct = allUserAnswersValid && userAnswers.length > 0;
     
     let isAlmostCorrect = false;
-    if (!correct && normalizedAnswer.length > 2) {
-      const editDistance = getEditDistance(normalizedAnswer, normalizedCorrect);
-      const maxLength = Math.max(normalizedAnswer.length, normalizedCorrect.length);
-      // More lenient threshold for letter swaps and minor errors
-      isAlmostCorrect = editDistance <= 2 && (editDistance <= 2 || editDistance / maxLength <= 0.4);
+    if (!correct && userAnswers.length === 1 && userAnswers[0].length > 2) {
+      // Check edit distance against all valid answers
+      const editDistances = validAnswers.map(validAns => ({
+        distance: getEditDistance(userAnswers[0], validAns),
+        maxLength: Math.max(userAnswers[0].length, validAns.length)
+      }));
+      
+      // Find the closest match
+      const closest = editDistances.reduce((best, current) => 
+        current.distance < best.distance ? current : best
+      );
+      
+      isAlmostCorrect = closest.distance <= 2 && (closest.distance <= 2 || closest.distance / closest.maxLength <= 0.4);
     }
     
     setIsCorrect(correct);
