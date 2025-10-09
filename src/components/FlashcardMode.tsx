@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -26,6 +26,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   const [sessionComplete, setSessionComplete] = useState(false);
   const [repetitionCount, setRepetitionCount] = useState<Record<string, { incorrect: number, almostCorrect: number }>>({});
   const { toast } = useToast();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Create study deck - each word appears once at the start of each session
@@ -35,6 +36,25 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
     const shuffled = studyDeck.sort(() => Math.random() - 0.5);
     setShuffledVocabulary(shuffled);
   }, []);
+
+  // Auto-focus input when card changes or when returning to input mode
+  useEffect(() => {
+    if (!showResult && !sessionComplete && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [currentIndex, showResult, sessionComplete]);
+
+  // Handle Enter key when showing result
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && showResult) {
+        nextCard();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showResult, currentIndex, shuffledVocabulary.length]);
 
   const currentCard = shuffledVocabulary[currentIndex];
   const progress = ((currentIndex + 1) / shuffledVocabulary.length) * 100;
@@ -276,6 +296,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                 Translate to {direction === 'forward' ? currentCard.targetLanguage : currentCard.language}
               </p>
               <Input
+                ref={inputRef}
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}
                 onKeyPress={handleKeyPress}
