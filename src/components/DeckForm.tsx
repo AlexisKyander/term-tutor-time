@@ -3,14 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface DeckFormProps {
   folderName: string;
-  editingDeck?: { id: string; name: string; fromLanguage: string; toLanguage: string };
-  onAdd: (name: string, fromLanguage: string, toLanguage: string) => void;
-  onUpdate?: (id: string, name: string, fromLanguage: string, toLanguage: string) => void;
+  editingDeck?: { id: string; name: string; fromLanguage: string; toLanguage: string; information?: string };
+  onAdd: (name: string, fromLanguage: string, toLanguage: string, information?: string) => void;
+  onUpdate?: (id: string, name: string, fromLanguage: string, toLanguage: string, information?: string) => void;
   onBack: () => void;
 }
 
@@ -18,6 +19,7 @@ export const DeckForm = ({ folderName, editingDeck, onAdd, onUpdate, onBack }: D
   const [name, setName] = useState(editingDeck?.name || "");
   const [fromLanguage, setFromLanguage] = useState(editingDeck?.fromLanguage || "English");
   const [toLanguage, setToLanguage] = useState(editingDeck?.toLanguage || "Spanish");
+  const [information, setInformation] = useState(editingDeck?.information || "");
   const { toast } = useToast();
   const isEditing = !!editingDeck;
 
@@ -34,13 +36,13 @@ export const DeckForm = ({ folderName, editingDeck, onAdd, onUpdate, onBack }: D
     }
 
     if (isEditing && editingDeck && onUpdate) {
-      onUpdate(editingDeck.id, name.trim(), fromLanguage.trim(), toLanguage.trim());
+      onUpdate(editingDeck.id, name.trim(), fromLanguage.trim(), toLanguage.trim(), information.trim() || undefined);
       toast({
         title: "Success!",
         description: "Deck updated successfully",
       });
     } else {
-      onAdd(name.trim(), fromLanguage.trim(), toLanguage.trim());
+      onAdd(name.trim(), fromLanguage.trim(), toLanguage.trim(), information.trim() || undefined);
       toast({
         title: "Success!",
         description: "Deck created successfully",
@@ -51,6 +53,7 @@ export const DeckForm = ({ folderName, editingDeck, onAdd, onUpdate, onBack }: D
       setName("");
       setFromLanguage("English");
       setToLanguage("Spanish");
+      setInformation("");
     }
   };
 
@@ -100,6 +103,17 @@ export const DeckForm = ({ folderName, editingDeck, onAdd, onUpdate, onBack }: D
                   onChange={(e) => setToLanguage(e.target.value)}
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="information">Information (optional)</Label>
+              <Textarea
+                id="information"
+                placeholder="Add notes or information about this deck..."
+                value={information}
+                onChange={(e) => setInformation(e.target.value)}
+                rows={3}
+              />
             </div>
             
             <div className="flex gap-2">

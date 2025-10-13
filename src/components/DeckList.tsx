@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ArrowLeft, BookOpen, Plus, Trash2, Brain, Settings, CheckCircle, Pencil, Eye } from "lucide-react";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { ArrowLeft, BookOpen, Plus, Trash2, Brain, Settings, CheckCircle, Pencil, Eye, Info } from "lucide-react";
 
 export interface Deck {
   id: string;
@@ -10,6 +11,7 @@ export interface Deck {
   folderId: string;
   fromLanguage: string;
   toLanguage: string;
+  information?: string;
   createdAt: Date;
 }
 
@@ -115,6 +117,23 @@ export const DeckList = ({
                       <div>
                         <div className="flex items-center space-x-2">
                           <CardTitle className="text-lg">{deck.name}</CardTitle>
+                          {deck.information && (
+                            <HoverCard>
+                              <HoverCardTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-4 w-4 p-0 hover:bg-transparent"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Info className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
+                                </Button>
+                              </HoverCardTrigger>
+                              <HoverCardContent className="w-80">
+                                <p className="text-sm whitespace-pre-wrap">{deck.information}</p>
+                              </HoverCardContent>
+                            </HoverCard>
+                          )}
                           {isCompleted && (
                             <CheckCircle className="w-4 h-4 text-green-600" />
                           )}

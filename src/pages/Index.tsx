@@ -171,7 +171,7 @@ const Index = () => {
     });
   };
 
-  const addDeck = (name: string, fromLanguage: string, toLanguage: string) => {
+  const addDeck = (name: string, fromLanguage: string, toLanguage: string, information?: string) => {
     if (!navigation.currentFolderId) return;
     
     const newDeck: Deck = {
@@ -180,15 +180,16 @@ const Index = () => {
       folderId: navigation.currentFolderId,
       fromLanguage,
       toLanguage,
+      information,
       createdAt: new Date(),
     };
     setDecks(prev => [...prev, newDeck]);
     setMode('decks');
   };
 
-  const updateDeck = (id: string, name: string, fromLanguage: string, toLanguage: string) => {
+  const updateDeck = (id: string, name: string, fromLanguage: string, toLanguage: string, information?: string) => {
     setDecks(prev => prev.map(deck => 
-      deck.id === id ? { ...deck, name, fromLanguage, toLanguage } : deck
+      deck.id === id ? { ...deck, name, fromLanguage, toLanguage, information } : deck
     ));
     setMode('decks');
     toast({
