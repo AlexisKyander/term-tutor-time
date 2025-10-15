@@ -9,16 +9,18 @@ import { useToast } from "@/hooks/use-toast";
 
 interface DeckFormProps {
   folderName: string;
+  defaultFromLanguage?: string;
+  defaultToLanguage?: string;
   editingDeck?: { id: string; name: string; fromLanguage: string; toLanguage: string; information?: string };
   onAdd: (name: string, fromLanguage: string, toLanguage: string, information?: string) => void;
   onUpdate?: (id: string, name: string, fromLanguage: string, toLanguage: string, information?: string) => void;
   onBack: () => void;
 }
 
-export const DeckForm = ({ folderName, editingDeck, onAdd, onUpdate, onBack }: DeckFormProps) => {
+export const DeckForm = ({ folderName, defaultFromLanguage, defaultToLanguage, editingDeck, onAdd, onUpdate, onBack }: DeckFormProps) => {
   const [name, setName] = useState(editingDeck?.name || "");
-  const [fromLanguage, setFromLanguage] = useState(editingDeck?.fromLanguage || "English");
-  const [toLanguage, setToLanguage] = useState(editingDeck?.toLanguage || "Spanish");
+  const [fromLanguage, setFromLanguage] = useState(editingDeck?.fromLanguage || defaultFromLanguage || "English");
+  const [toLanguage, setToLanguage] = useState(editingDeck?.toLanguage || defaultToLanguage || "Spanish");
   const [information, setInformation] = useState(editingDeck?.information || "");
   const { toast } = useToast();
   const isEditing = !!editingDeck;

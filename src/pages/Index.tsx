@@ -31,11 +31,12 @@ export interface VocabularyItem {
   };
 }
 
-type Mode = 'folders' | 'add-folder' | 'decks' | 'add-deck' | 'edit-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'study' | 'preview' | 'settings' | 'direction-selector' | 'preview-options';
+type Mode = 'folders' | 'add-folder' | 'edit-folder' | 'decks' | 'add-deck' | 'edit-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'study' | 'preview' | 'settings' | 'direction-selector' | 'preview-options';
 
 interface NavigationState {
   currentFolderId?: string;
   currentDeckId?: string;
+  editingFolderId?: string;
   editingDeckId?: string;
   editingVocabularyId?: string;
   studyDirection?: 'forward' | 'reverse';
@@ -143,14 +144,32 @@ const Index = () => {
     input.click();
   };
 
-  const addFolder = (name: string) => {
+  const addFolder = (name: string, fromLanguage: string, toLanguage: string) => {
     const newFolder: Folder = {
       id: crypto.randomUUID(),
       name,
+      fromLanguage,
+      toLanguage,
       createdAt: new Date(),
     };
     setFolders(prev => [...prev, newFolder]);
     setMode('folders');
+  };
+
+  const updateFolder = (id: string, name: string, fromLanguage: string, toLanguage: string) => {
+    setFolders(prev => prev.map(folder => 
+      folder.id === id ? { ...folder, name, fromLanguage, toLanguage } : folder
+    ));
+    setMode('folders');
+    toast({
+      title: "Folder updated",
+      description: "Folder settings have been updated",
+    });
+  };
+
+  const editFolder = (id: string) => {
+    setNavigation(prev => ({ ...prev, editingFolderId: id }));
+    setMode('edit-folder');
   };
 
   const deleteFolder = (id: string) => {
@@ -333,6 +352,22 @@ const Index = () => {
           />
         );
 
+      case 'edit-folder': {
+        const editingFolder = folders.find(f => f.id === navigation.editingFolderId);
+        if (!editingFolder) {
+          setMode('folders');
+          return null;
+        }
+        return (
+          <FolderForm 
+            editingFolder={editingFolder}
+            onAdd={addFolder}
+            onUpdate={updateFolder}
+            onBack={() => setMode('folders')}
+          />
+        );
+      }
+
       case 'decks': {
         const currentFolder = getCurrentFolder();
         if (!currentFolder) {
@@ -366,6 +401,8 @@ const Index = () => {
         return (
           <DeckForm 
             folderName={currentFolder.name}
+            defaultFromLanguage={currentFolder.fromLanguage}
+            defaultToLanguage={currentFolder.toLanguage}
             onAdd={addDeck}
             onBack={() => setMode('decks')}
           />
@@ -527,6 +564,7 @@ const Index = () => {
             folders={folders}
             onSelectFolder={selectFolder}
             onAddFolder={() => setMode('add-folder')}
+            onEditFolder={editFolder}
             onDeleteFolder={deleteFolder}
           />
         );

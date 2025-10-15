@@ -1,38 +1,62 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import type { Folder } from "@/components/FolderList";
 
 interface FolderFormProps {
-  onAdd: (name: string) => void;
+  editingFolder?: Folder;
+  onAdd: (name: string, fromLanguage: string, toLanguage: string) => void;
+  onUpdate?: (id: string, name: string, fromLanguage: string, toLanguage: string) => void;
   onBack: () => void;
 }
 
-export const FolderForm = ({ onAdd, onBack }: FolderFormProps) => {
+export const FolderForm = ({ editingFolder, onAdd, onUpdate, onBack }: FolderFormProps) => {
   const [name, setName] = useState("");
+  const [fromLanguage, setFromLanguage] = useState("");
+  const [toLanguage, setToLanguage] = useState("");
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (editingFolder) {
+      setName(editingFolder.name);
+      setFromLanguage(editingFolder.fromLanguage);
+      setToLanguage(editingFolder.toLanguage);
+    }
+  }, [editingFolder]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim()) {
+    if (!name.trim() || !fromLanguage.trim() || !toLanguage.trim()) {
       toast({
         title: "Error",
-        description: "Please enter a folder name",
+        description: "Please fill in all fields",
         variant: "destructive",
       });
       return;
     }
 
-    onAdd(name.trim());
+    if (editingFolder && onUpdate) {
+      onUpdate(editingFolder.id, name.trim(), fromLanguage.trim(), toLanguage.trim());
+      toast({
+        title: "Success!",
+        description: "Folder updated successfully",
+      });
+    } else {
+      onAdd(name.trim(), fromLanguage.trim(), toLanguage.trim());
+      toast({
+        title: "Success!",
+        description: "Folder created successfully",
+      });
+    }
+    
     setName("");
-    toast({
-      title: "Success!",
-      description: "Folder created successfully",
-    });
+    setFromLanguage("");
+    setToLanguage("");
   };
 
   return (
@@ -44,9 +68,9 @@ export const FolderForm = ({ onAdd, onBack }: FolderFormProps) => {
       
       <Card>
         <CardHeader>
-          <CardTitle>Create New Folder</CardTitle>
+          <CardTitle>{editingFolder ? 'Edit Folder' : 'Create New Folder'}</CardTitle>
           <CardDescription>
-            Create a folder to organize your vocabulary by language pairs
+            {editingFolder ? 'Update folder settings' : 'Create a folder to organize your vocabulary by language pairs'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -61,10 +85,30 @@ export const FolderForm = ({ onAdd, onBack }: FolderFormProps) => {
                 autoFocus
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="fromLanguage">From Language</Label>
+              <Input
+                id="fromLanguage"
+                placeholder="e.g., English"
+                value={fromLanguage}
+                onChange={(e) => setFromLanguage(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="toLanguage">To Language</Label>
+              <Input
+                id="toLanguage"
+                placeholder="e.g., Spanish"
+                value={toLanguage}
+                onChange={(e) => setToLanguage(e.target.value)}
+              />
+            </div>
             
             <div className="flex gap-2">
               <Button type="submit" className="flex-1">
-                Create Folder
+                {editingFolder ? 'Update Folder' : 'Create Folder'}
               </Button>
               <Button type="button" variant="outline" onClick={onBack}>
                 Cancel

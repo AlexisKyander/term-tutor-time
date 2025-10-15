@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { FolderOpen, Plus, Trash2 } from "lucide-react";
+import { FolderOpen, Plus, Trash2, Edit } from "lucide-react";
 
 export interface Folder {
   id: string;
   name: string;
+  fromLanguage: string;
+  toLanguage: string;
   createdAt: Date;
 }
 
@@ -14,10 +16,11 @@ interface FolderListProps {
   folders: Folder[];
   onSelectFolder: (folderId: string) => void;
   onAddFolder: () => void;
+  onEditFolder: (id: string) => void;
   onDeleteFolder: (id: string) => void;
 }
 
-export const FolderList = ({ folders, onSelectFolder, onAddFolder, onDeleteFolder }: FolderListProps) => {
+export const FolderList = ({ folders, onSelectFolder, onAddFolder, onEditFolder, onDeleteFolder }: FolderListProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
 
@@ -74,21 +77,32 @@ export const FolderList = ({ folders, onSelectFolder, onAddFolder, onDeleteFolde
                     <div>
                       <CardTitle className="text-lg">{folder.name}</CardTitle>
                       <CardDescription>
-                        Created {folder.createdAt.toLocaleDateString()}
+                        {folder.fromLanguage} → {folder.toLanguage}
                       </CardDescription>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteClick(folder.id);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditFolder(folder.id);
+                      }}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteClick(folder.id);
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
             </Card>
