@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Image as ImageIcon, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export interface VocabularyItem {
@@ -11,6 +11,7 @@ export interface VocabularyItem {
   word: string;
   translation: string;
   comment: string;
+  image?: string;
   language: string;
   targetLanguage: string;
   deckId: string;
@@ -18,7 +19,7 @@ export interface VocabularyItem {
 }
 
 interface VocabularyFormProps {
-  onAdd: (item: { word: string; translation: string; comment: string; deckId: string }) => void;
+  onAdd: (item: { word: string; translation: string; comment: string; image?: string; deckId: string }) => void;
   onBack: () => void;
   deckName: string;
   deckId: string;
@@ -28,7 +29,23 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId }: VocabularyFo
   const [word, setWord] = useState("");
   const [translation, setTranslation] = useState("");
   const [comment, setComment] = useState("");
+  const [image, setImage] = useState<string>("");
   const { toast } = useToast();
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImage("");
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,11 +63,13 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId }: VocabularyFo
       word: word.trim(),
       translation: translation.trim(),
       comment: comment.trim(),
+      image: image || undefined,
       deckId,
     });
     setWord("");
     setTranslation("");
     setComment("");
+    setImage("");
     
     toast({
       title: "Success!",
@@ -103,6 +122,43 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId }: VocabularyFo
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="image">Image (optional)</Label>
+              <div className="space-y-2">
+                {image ? (
+                  <div className="relative">
+                    <img src={image} alt="Preview" className="w-full h-32 object-cover rounded-md" />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={removeImage}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="image"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    <Label
+                      htmlFor="image"
+                      className="flex items-center gap-2 px-4 py-2 border rounded-md cursor-pointer hover:bg-accent"
+                    >
+                      <ImageIcon className="w-4 h-4" />
+                      Upload Image
+                    </Label>
+                  </div>
+                )}
+              </div>
             </div>
             
             <div className="flex gap-2">

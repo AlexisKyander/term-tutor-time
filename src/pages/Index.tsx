@@ -20,6 +20,7 @@ export interface VocabularyItem {
   word: string;
   translation: string;
   comment: string;
+  image?: string;
   language: string;
   targetLanguage: string;
   deckId: string;

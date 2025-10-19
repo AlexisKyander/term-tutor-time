@@ -347,11 +347,20 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                   )}
                 </div>
                 
-                {currentCard.comment && (
-                  <div className="p-3 bg-muted/30 rounded-lg">
-                    <p className="text-sm text-muted-foreground italic">
-                      Context: {currentCard.comment}
-                    </p>
+                {(currentCard.comment || currentCard.image) && (
+                  <div className="p-3 bg-muted/30 rounded-lg space-y-2">
+                    {currentCard.comment && (
+                      <p className="text-sm text-muted-foreground italic">
+                        Context: {currentCard.comment}
+                      </p>
+                    )}
+                    {currentCard.image && (
+                      <img 
+                        src={currentCard.image} 
+                        alt="Context" 
+                        className="w-full max-h-48 object-contain rounded-md"
+                      />
+                    )}
                   </div>
                 )}
                 

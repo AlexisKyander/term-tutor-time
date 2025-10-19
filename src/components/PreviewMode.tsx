@@ -158,11 +158,20 @@ export const PreviewMode = ({ vocabulary, delay, order, onBack }: PreviewModePro
                 </h3>
               </div>
 
-              {currentCard.comment && (
-                <div className="p-4 bg-muted/30 rounded-lg max-w-md mx-auto">
-                  <p className="text-sm text-muted-foreground italic">
-                    {currentCard.comment}
-                  </p>
+              {(currentCard.comment || currentCard.image) && (
+                <div className="p-4 bg-muted/30 rounded-lg max-w-md mx-auto space-y-2">
+                  {currentCard.comment && (
+                    <p className="text-sm text-muted-foreground italic">
+                      {currentCard.comment}
+                    </p>
+                  )}
+                  {currentCard.image && (
+                    <img 
+                      src={currentCard.image} 
+                      alt="Context" 
+                      className="w-full max-h-48 object-contain rounded-md"
+                    />
+                  )}
                 </div>
               )}
 

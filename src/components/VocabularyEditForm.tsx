@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Image as ImageIcon, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { VocabularyItem } from "@/pages/Index";
 
@@ -18,7 +18,23 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
   const [word, setWord] = useState(item.word);
   const [translation, setTranslation] = useState(item.translation);
   const [comment, setComment] = useState(item.comment);
+  const [image, setImage] = useState<string>(item.image || "");
   const { toast } = useToast();
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImage("");
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +53,7 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
       word: word.trim(),
       translation: translation.trim(),
       comment: comment.trim(),
+      image: image || undefined,
     };
 
     onUpdate(updatedItem);
@@ -92,6 +109,43 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="image">Image (optional)</Label>
+              <div className="space-y-2">
+                {image ? (
+                  <div className="relative">
+                    <img src={image} alt="Preview" className="w-full h-32 object-cover rounded-md" />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={removeImage}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="image"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    <Label
+                      htmlFor="image"
+                      className="flex items-center gap-2 px-4 py-2 border rounded-md cursor-pointer hover:bg-accent"
+                    >
+                      <ImageIcon className="w-4 h-4" />
+                      Upload Image
+                    </Label>
+                  </div>
+                )}
+              </div>
             </div>
             
             <div className="flex gap-2">
