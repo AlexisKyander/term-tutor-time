@@ -3,6 +3,7 @@ import { VocabularyForm } from "@/components/VocabularyForm";
 import { VocabularyList } from "@/components/VocabularyList";
 import { VocabularyEditForm } from "@/components/VocabularyEditForm";
 import { FlashcardMode } from "@/components/FlashcardMode";
+import { CategoryList, type Category } from "@/components/CategoryList";
 import { FolderList, type Folder } from "@/components/FolderList";
 import { DeckList, type Deck } from "@/components/DeckList";
 import { FolderForm } from "@/components/FolderForm";
@@ -32,9 +33,10 @@ export interface VocabularyItem {
   };
 }
 
-type Mode = 'folders' | 'add-folder' | 'edit-folder' | 'decks' | 'add-deck' | 'edit-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'study' | 'preview' | 'settings' | 'direction-selector' | 'preview-options';
+type Mode = 'categories' | 'folders' | 'add-folder' | 'edit-folder' | 'decks' | 'add-deck' | 'edit-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'study' | 'preview' | 'settings' | 'direction-selector' | 'preview-options';
 
 interface NavigationState {
+  currentCategoryId?: string;
   currentFolderId?: string;
   currentDeckId?: string;
   editingFolderId?: string;
@@ -54,10 +56,14 @@ const DEFAULT_SETTINGS: StudySettings = {
 };
 
 const Index = () => {
+  const [categories] = useState<Category[]>([
+    { id: 'vocabulary', name: 'Vocabulary', icon: 'vocabulary' },
+    { id: 'grammar', name: 'Grammar', icon: 'grammar' },
+  ]);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [decks, setDecks] = useState<Deck[]>([]);
   const [vocabulary, setVocabulary] = useState<VocabularyItem[]>([]);
-  const [mode, setMode] = useState<Mode>('folders');
+  const [mode, setMode] = useState<Mode>('categories');
   const [navigation, setNavigation] = useState<NavigationState>({});
   const [settings, setSettings] = useState<StudySettings>(DEFAULT_SETTINGS);
   const { toast } = useToast();
@@ -68,7 +74,17 @@ const Index = () => {
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
-        if (parsed.folders) setFolders(parsed.folders.map((f: Folder) => ({ ...f, createdAt: new Date(f.createdAt) })));
+        
+        // Migration: Add categoryId to existing folders if they don't have it
+        if (parsed.folders) {
+          const migratedFolders = parsed.folders.map((f: Folder) => ({
+            ...f,
+            categoryId: f.categoryId || 'vocabulary', // Default to 'vocabulary' for existing folders
+            createdAt: new Date(f.createdAt)
+          }));
+          setFolders(migratedFolders);
+        }
+        
         if (parsed.decks) setDecks(parsed.decks.map((d: Deck) => ({ ...d, createdAt: new Date(d.createdAt) })));
         if (parsed.vocabulary) setVocabulary(parsed.vocabulary.map((v: VocabularyItem) => ({ ...v, createdAt: new Date(v.createdAt) })));
         if (parsed.settings) setSettings({ ...DEFAULT_SETTINGS, ...parsed.settings });
@@ -145,12 +161,18 @@ const Index = () => {
     input.click();
   };
 
-  const addFolder = (name: string, fromLanguage: string, toLanguage: string) => {
+  const selectCategory = (categoryId: string) => {
+    setNavigation({ currentCategoryId: categoryId });
+    setMode('folders');
+  };
+
+  const addFolder = (name: string, fromLanguage: string, toLanguage: string, categoryId: string) => {
     const newFolder: Folder = {
       id: crypto.randomUUID(),
       name,
       fromLanguage,
       toLanguage,
+      categoryId: categoryId || navigation.currentCategoryId || 'vocabulary',
       createdAt: new Date(),
     };
     setFolders(prev => [...prev, newFolder]);
@@ -282,8 +304,16 @@ const Index = () => {
   };
 
   const selectFolder = (folderId: string) => {
-    setNavigation({ currentFolderId: folderId });
+    setNavigation(prev => ({ ...prev, currentFolderId: folderId }));
     setMode('decks');
+  };
+
+  const getCurrentCategory = () => {
+    return categories.find(c => c.id === navigation.currentCategoryId);
+  };
+
+  const getCurrentCategoryFolders = () => {
+    return folders.filter(f => f.categoryId === navigation.currentCategoryId);
   };
 
   const selectDeck = (deckId: string) => {
@@ -345,9 +375,29 @@ const Index = () => {
 
   const renderContent = () => {
     switch (mode) {
+      case 'folders': {
+        const currentCategory = getCurrentCategory();
+        if (!currentCategory) {
+          setMode('categories');
+          return null;
+        }
+        return (
+          <FolderList 
+            folders={getCurrentCategoryFolders()}
+            categoryName={currentCategory.name}
+            onSelectFolder={selectFolder}
+            onAddFolder={() => setMode('add-folder')}
+            onEditFolder={editFolder}
+            onDeleteFolder={deleteFolder}
+            onBack={() => setMode('categories')}
+          />
+        );
+      }
+
       case 'add-folder':
         return (
           <FolderForm 
+            categoryId={navigation.currentCategoryId}
             onAdd={addFolder}
             onBack={() => setMode('folders')}
           />
@@ -561,12 +611,9 @@ const Index = () => {
 
       default:
         return (
-          <FolderList 
-            folders={folders}
-            onSelectFolder={selectFolder}
-            onAddFolder={() => setMode('add-folder')}
-            onEditFolder={editFolder}
-            onDeleteFolder={deleteFolder}
+          <CategoryList 
+            categories={categories}
+            onSelectCategory={selectCategory}
           />
         );
     }
@@ -575,7 +622,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-purple-50/30">
       <div className="container mx-auto px-4 py-8">
-        {mode === 'folders' && (
+        {mode === 'categories' && (
           <div className="flex gap-2 mb-4 justify-end">
             <Button variant="outline" size="sm" onClick={importData}>
               <Upload className="w-4 h-4 mr-2" />

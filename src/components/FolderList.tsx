@@ -9,18 +9,21 @@ export interface Folder {
   name: string;
   fromLanguage: string;
   toLanguage: string;
+  categoryId: string;
   createdAt: Date;
 }
 
 interface FolderListProps {
   folders: Folder[];
+  categoryName: string;
   onSelectFolder: (folderId: string) => void;
   onAddFolder: () => void;
   onEditFolder: (id: string) => void;
   onDeleteFolder: (id: string) => void;
+  onBack: () => void;
 }
 
-export const FolderList = ({ folders, onSelectFolder, onAddFolder, onEditFolder, onDeleteFolder }: FolderListProps) => {
+export const FolderList = ({ folders, categoryName, onSelectFolder, onAddFolder, onEditFolder, onDeleteFolder, onBack }: FolderListProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
 
@@ -42,13 +45,18 @@ export const FolderList = ({ folders, onSelectFolder, onAddFolder, onEditFolder,
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Language Folders</h2>
-          <p className="text-muted-foreground">Organize your vocabulary by language pairs</p>
+          <h2 className="text-2xl font-bold">{categoryName} Folders</h2>
+          <p className="text-muted-foreground">Organize your {categoryName.toLowerCase()} by language pairs</p>
         </div>
-        <Button onClick={onAddFolder}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Folder
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onBack}>
+            Back
+          </Button>
+          <Button onClick={onAddFolder}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Folder
+          </Button>
+        </div>
       </div>
 
       {folders.length === 0 ? (

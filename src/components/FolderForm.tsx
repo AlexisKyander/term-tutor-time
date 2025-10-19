@@ -9,12 +9,13 @@ import type { Folder } from "@/components/FolderList";
 
 interface FolderFormProps {
   editingFolder?: Folder;
-  onAdd: (name: string, fromLanguage: string, toLanguage: string) => void;
+  categoryId?: string;
+  onAdd: (name: string, fromLanguage: string, toLanguage: string, categoryId: string) => void;
   onUpdate?: (id: string, name: string, fromLanguage: string, toLanguage: string) => void;
   onBack: () => void;
 }
 
-export const FolderForm = ({ editingFolder, onAdd, onUpdate, onBack }: FolderFormProps) => {
+export const FolderForm = ({ editingFolder, categoryId, onAdd, onUpdate, onBack }: FolderFormProps) => {
   const [name, setName] = useState("");
   const [fromLanguage, setFromLanguage] = useState("");
   const [toLanguage, setToLanguage] = useState("");
@@ -47,7 +48,7 @@ export const FolderForm = ({ editingFolder, onAdd, onUpdate, onBack }: FolderFor
         description: "Folder updated successfully",
       });
     } else {
-      onAdd(name.trim(), fromLanguage.trim(), toLanguage.trim());
+      onAdd(name.trim(), fromLanguage.trim(), toLanguage.trim(), categoryId || editingFolder?.categoryId || '');
       toast({
         title: "Success!",
         description: "Folder created successfully",
