@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowLeft, Plus, Image as ImageIcon, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,6 +14,9 @@ export interface VocabularyItem {
   translation: string;
   comment: string;
   image?: string;
+  type?: 'practice' | 'grammar-rule';
+  title?: string;
+  rule?: string;
   language: string;
   targetLanguage: string;
   deckId: string;
@@ -19,17 +24,21 @@ export interface VocabularyItem {
 }
 
 interface VocabularyFormProps {
-  onAdd: (item: { word: string; translation: string; comment: string; image?: string; deckId: string }) => void;
+  onAdd: (item: { word: string; translation: string; comment: string; image?: string; type?: 'practice' | 'grammar-rule'; title?: string; rule?: string; deckId: string }) => void;
   onBack: () => void;
   deckName: string;
   deckId: string;
+  categoryId?: string;
 }
 
-export const VocabularyForm = ({ onAdd, onBack, deckName, deckId }: VocabularyFormProps) => {
+export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId }: VocabularyFormProps) => {
+  const [cardType, setCardType] = useState<'practice' | 'grammar-rule'>('practice');
   const [word, setWord] = useState("");
   const [translation, setTranslation] = useState("");
   const [comment, setComment] = useState("");
   const [image, setImage] = useState<string>("");
+  const [title, setTitle] = useState("");
+  const [rule, setRule] = useState("");
   const { toast } = useToast();
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,31 +59,60 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId }: VocabularyFo
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!word.trim() || !translation.trim()) {
-      toast({
-        title: "Error",
-        description: "Please fill in both word and translation",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (cardType === 'grammar-rule') {
+      if (!title.trim() || !rule.trim()) {
+        toast({
+          title: "Error",
+          description: "Please fill in both title and grammar rule",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    onAdd({
-      word: word.trim(),
-      translation: translation.trim(),
-      comment: comment.trim(),
-      image: image || undefined,
-      deckId,
-    });
-    setWord("");
-    setTranslation("");
-    setComment("");
-    setImage("");
-    
-    toast({
-      title: "Success!",
-      description: "Vocabulary added successfully",
-    });
+      onAdd({
+        word: "",
+        translation: "",
+        comment: "",
+        type: 'grammar-rule',
+        title: title.trim(),
+        rule: rule.trim(),
+        deckId,
+      });
+      setTitle("");
+      setRule("");
+      
+      toast({
+        title: "Success!",
+        description: "Grammar rule added successfully",
+      });
+    } else {
+      if (!word.trim() || !translation.trim()) {
+        toast({
+          title: "Error",
+          description: "Please fill in both word and translation",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      onAdd({
+        word: word.trim(),
+        translation: translation.trim(),
+        comment: comment.trim(),
+        image: image || undefined,
+        type: 'practice',
+        deckId,
+      });
+      setWord("");
+      setTranslation("");
+      setComment("");
+      setImage("");
+      
+      toast({
+        title: "Success!",
+        description: "Vocabulary added successfully",
+      });
+    }
   };
 
   return (
@@ -86,85 +124,132 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId }: VocabularyFo
       
       <Card>
         <CardHeader>
-          <CardTitle>Add New Vocabulary</CardTitle>
+          <CardTitle>Add New {categoryId === 'grammar' ? 'Card' : 'Vocabulary'}</CardTitle>
           <CardDescription>
-            Add a new word and its translation to {deckName}
+            Add a new {categoryId === 'grammar' ? 'card' : 'word and its translation'} to {deckName}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="word">Word</Label>
-              <Input
-                id="word"
-                placeholder="Enter the word"
-                value={word}
-                onChange={(e) => setWord(e.target.value)}
-                autoFocus
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="translation">Translation</Label>
-              <Input
-                id="translation"
-                placeholder="Enter the translation"
-                value={translation}
-                onChange={(e) => setTranslation(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="comment">Context/Comment (optional)</Label>
-              <Input
-                id="comment"
-                placeholder="e.g., Used in formal settings, Common greeting"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="image">Image (optional)</Label>
+            {categoryId === 'grammar' && (
               <div className="space-y-2">
-                {image ? (
-                  <div className="relative">
-                    <img src={image} alt="Preview" className="w-full h-32 object-cover rounded-md" />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={removeImage}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
+                <Label>Card Type</Label>
+                <RadioGroup value={cardType} onValueChange={(value) => setCardType(value as 'practice' | 'grammar-rule')}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="practice" id="practice" />
+                    <Label htmlFor="practice" className="font-normal cursor-pointer">Practice</Label>
                   </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="image"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                    <Label
-                      htmlFor="image"
-                      className="flex items-center gap-2 px-4 py-2 border rounded-md cursor-pointer hover:bg-accent"
-                    >
-                      <ImageIcon className="w-4 h-4" />
-                      Upload Image
-                    </Label>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="grammar-rule" id="grammar-rule" />
+                    <Label htmlFor="grammar-rule" className="font-normal cursor-pointer">Grammar Rule</Label>
                   </div>
-                )}
+                </RadioGroup>
               </div>
-            </div>
+            )}
+
+            {cardType === 'grammar-rule' ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title</Label>
+                  <Input
+                    id="title"
+                    placeholder="Enter the grammar rule title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="rule">Grammar Rule</Label>
+                  <Textarea
+                    id="rule"
+                    placeholder="Enter the grammar rule (you can use markdown for tables)"
+                    value={rule}
+                    onChange={(e) => setRule(e.target.value)}
+                    className="min-h-[200px]"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Tip: You can format tables using markdown syntax
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="word">Word</Label>
+                  <Input
+                    id="word"
+                    placeholder="Enter the word"
+                    value={word}
+                    onChange={(e) => setWord(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="translation">Translation</Label>
+                  <Input
+                    id="translation"
+                    placeholder="Enter the translation"
+                    value={translation}
+                    onChange={(e) => setTranslation(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="comment">Context/Comment (optional)</Label>
+                  <Input
+                    id="comment"
+                    placeholder="e.g., Used in formal settings, Common greeting"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="image">Image (optional)</Label>
+                  <div className="space-y-2">
+                    {image ? (
+                      <div className="relative">
+                        <img src={image} alt="Preview" className="w-full h-32 object-cover rounded-md" />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2"
+                          onClick={removeImage}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="image"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
+                        />
+                        <Label
+                          htmlFor="image"
+                          className="flex items-center gap-2 px-4 py-2 border rounded-md cursor-pointer hover:bg-accent"
+                        >
+                          <ImageIcon className="w-4 h-4" />
+                          Upload Image
+                        </Label>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
             
             <div className="flex gap-2">
               <Button type="submit" className="flex-1">
                 <Plus className="w-4 h-4 mr-2" />
-                Add Vocabulary
+                Add {cardType === 'grammar-rule' ? 'Grammar Rule' : 'Vocabulary'}
               </Button>
               <Button type="button" variant="outline" onClick={onBack}>
                 Cancel

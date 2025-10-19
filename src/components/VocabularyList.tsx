@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Trash2, BookOpen, Plus, Edit3 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Trash2, BookOpen, Plus, Edit3, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export interface VocabularyItem {
@@ -11,6 +12,10 @@ export interface VocabularyItem {
   word: string;
   translation: string;
   comment: string;
+  image?: string;
+  type?: 'practice' | 'grammar-rule';
+  title?: string;
+  rule?: string;
   language: string;
   targetLanguage: string;
   deckId: string;
@@ -26,6 +31,7 @@ interface VocabularyListProps {
   vocabulary: VocabularyItem[];
   onDelete: (id: string) => void;
   onEdit: (id: string) => void;
+  onView?: (id: string) => void;
   onBack: () => void;
   deckName: string;
   onAddWord: () => void;
@@ -33,7 +39,7 @@ interface VocabularyListProps {
   toLanguage: string;
 }
 
-export const VocabularyList = ({ vocabulary, onDelete, onEdit, onBack, deckName, onAddWord, fromLanguage, toLanguage }: VocabularyListProps) => {
+export const VocabularyList = ({ vocabulary, onDelete, onEdit, onView, onBack, deckName, onAddWord, fromLanguage, toLanguage }: VocabularyListProps) => {
   const { toast } = useToast();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<VocabularyItem | null>(null);
@@ -90,6 +96,7 @@ export const VocabularyList = ({ vocabulary, onDelete, onEdit, onBack, deckName,
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Type</TableHead>
                     <TableHead>{fromLanguage}</TableHead>
                     <TableHead>{toLanguage}</TableHead>
                     <TableHead>Comment</TableHead>
@@ -98,41 +105,70 @@ export const VocabularyList = ({ vocabulary, onDelete, onEdit, onBack, deckName,
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {vocabulary.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.word}</TableCell>
-                      <TableCell>{item.translation}</TableCell>
-                      <TableCell className="text-muted-foreground italic">
-                        {item.comment || "-"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-3 text-sm">
-                          <span className="text-green-600">✓ {item.statistics.correct}</span>
-                          <span className="text-yellow-600">~ {item.statistics.almostCorrect}</span>
-                          <span className="text-red-600">✗ {item.statistics.incorrect}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end space-x-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onEdit(item.id)}
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteClick(item)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {vocabulary.map((item) => {
+                    const isGrammarRule = item.type === 'grammar-rule';
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <Badge variant={isGrammarRule ? "secondary" : "outline"}>
+                            {isGrammarRule ? "Rule" : "Practice"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {isGrammarRule ? item.title : item.word}
+                        </TableCell>
+                        <TableCell>
+                          {isGrammarRule ? (
+                            <span className="text-muted-foreground italic">
+                              {item.rule && item.rule.length > 50 
+                                ? `${item.rule.substring(0, 50)}...` 
+                                : item.rule}
+                            </span>
+                          ) : item.translation}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground italic">
+                          {!isGrammarRule && (item.comment || "-")}
+                        </TableCell>
+                        <TableCell>
+                          {!isGrammarRule && (
+                            <div className="flex items-center space-x-3 text-sm">
+                              <span className="text-green-600">✓ {item.statistics.correct}</span>
+                              <span className="text-yellow-600">~ {item.statistics.almostCorrect}</span>
+                              <span className="text-red-600">✗ {item.statistics.incorrect}</span>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end space-x-1">
+                            {isGrammarRule && onView && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onView(item.id)}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onEdit(item.id)}
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteClick(item)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

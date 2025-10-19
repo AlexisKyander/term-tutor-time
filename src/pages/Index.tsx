@@ -3,6 +3,7 @@ import { VocabularyForm } from "@/components/VocabularyForm";
 import { VocabularyList } from "@/components/VocabularyList";
 import { VocabularyEditForm } from "@/components/VocabularyEditForm";
 import { FlashcardMode } from "@/components/FlashcardMode";
+import { GrammarRuleView } from "@/components/GrammarRuleView";
 import { CategoryList, type Category } from "@/components/CategoryList";
 import { FolderList, type Folder } from "@/components/FolderList";
 import { DeckList, type Deck } from "@/components/DeckList";
@@ -22,6 +23,9 @@ export interface VocabularyItem {
   translation: string;
   comment: string;
   image?: string;
+  type?: 'practice' | 'grammar-rule';
+  title?: string;
+  rule?: string;
   language: string;
   targetLanguage: string;
   deckId: string;
@@ -33,7 +37,7 @@ export interface VocabularyItem {
   };
 }
 
-type Mode = 'categories' | 'folders' | 'add-folder' | 'edit-folder' | 'decks' | 'add-deck' | 'edit-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'study' | 'preview' | 'settings' | 'direction-selector' | 'preview-options';
+type Mode = 'categories' | 'folders' | 'add-folder' | 'edit-folder' | 'decks' | 'add-deck' | 'edit-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'view-grammar-rule' | 'study' | 'preview' | 'settings' | 'direction-selector' | 'preview-options';
 
 interface NavigationState {
   currentCategoryId?: string;
@@ -42,6 +46,7 @@ interface NavigationState {
   editingFolderId?: string;
   editingDeckId?: string;
   editingVocabularyId?: string;
+  viewingVocabularyId?: string;
   studyDirection?: 'forward' | 'reverse';
   previewDelay?: number;
   previewOrder?: 'original' | 'random';
@@ -289,6 +294,11 @@ const Index = () => {
     setMode('edit-word');
   };
 
+  const viewGrammarRule = (id: string) => {
+    setNavigation(prev => ({ ...prev, viewingVocabularyId: id }));
+    setMode('view-grammar-rule');
+  };
+
   const updateVocabularyStatistics = (vocabularyId: string, result: 'correct' | 'almostCorrect' | 'incorrect') => {
     setVocabulary(prev => prev.map(item => 
       item.id === vocabularyId 
@@ -355,6 +365,10 @@ const Index = () => {
 
   const getCurrentVocabulary = () => {
     return vocabulary.filter(v => v.deckId === navigation.currentDeckId);
+  };
+
+  const getCurrentPracticeVocabulary = () => {
+    return vocabulary.filter(v => v.deckId === navigation.currentDeckId && v.type !== 'grammar-rule');
   };
 
   const getVocabularyCounts = () => {
@@ -480,7 +494,8 @@ const Index = () => {
 
       case 'vocabulary': {
         const currentDeck = getCurrentDeck();
-        if (!currentDeck) {
+        const currentFolder = getCurrentFolder();
+        if (!currentDeck || !currentFolder) {
           setMode('decks');
           return null;
         }
@@ -492,6 +507,7 @@ const Index = () => {
             toLanguage={currentDeck.toLanguage}
             onDelete={deleteVocabulary}
             onEdit={editVocabulary}
+            onView={viewGrammarRule}
             onAddWord={() => setMode('add-word')}
             onBack={() => setMode('decks')}
           />
@@ -500,7 +516,8 @@ const Index = () => {
 
       case 'add-word': {
         const currentDeck = getCurrentDeck();
-        if (!currentDeck) {
+        const currentFolder = getCurrentFolder();
+        if (!currentDeck || !currentFolder) {
           setMode('decks');
           return null;
         }
@@ -508,6 +525,7 @@ const Index = () => {
           <VocabularyForm 
             deckName={currentDeck.name}
             deckId={currentDeck.id}
+            categoryId={currentFolder.categoryId}
             onAdd={addVocabulary}
             onBack={() => setMode('vocabulary')}
           />
@@ -526,6 +544,22 @@ const Index = () => {
             item={editingItem}
             deckName={currentDeck.name}
             onUpdate={updateVocabulary}
+            onBack={() => setMode('vocabulary')}
+          />
+        );
+      }
+
+      case 'view-grammar-rule': {
+        const currentDeck = getCurrentDeck();
+        const viewingItem = vocabulary.find(v => v.id === navigation.viewingVocabularyId);
+        if (!currentDeck || !viewingItem) {
+          setMode('vocabulary');
+          return null;
+        }
+        return (
+          <GrammarRuleView 
+            item={viewingItem}
+            deckName={currentDeck.name}
             onBack={() => setMode('vocabulary')}
           />
         );
@@ -563,7 +597,7 @@ const Index = () => {
 
       case 'study': {
         const currentDeck = getCurrentDeck();
-        const vocabItems = getCurrentVocabulary();
+        const vocabItems = getCurrentPracticeVocabulary();
         
         if (!currentDeck || !navigation.studyDirection) {
           setMode('decks');
@@ -583,7 +617,7 @@ const Index = () => {
 
       case 'preview': {
         const currentDeck = getCurrentDeck();
-        const vocabItems = getCurrentVocabulary();
+        const vocabItems = getCurrentPracticeVocabulary();
         
         if (!currentDeck) {
           setMode('decks');
