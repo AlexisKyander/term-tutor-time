@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,22 +11,19 @@ interface DeckFormProps {
   folderName: string;
   defaultFromLanguage?: string;
   defaultToLanguage?: string;
-  categoryId?: string;
-  editingDeck?: { id: string; name: string; fromLanguage: string; toLanguage: string; information?: string; deckType?: 'exercises' | 'grammar-rules' };
-  onAdd: (name: string, fromLanguage: string, toLanguage: string, information?: string, deckType?: 'exercises' | 'grammar-rules') => void;
-  onUpdate?: (id: string, name: string, fromLanguage: string, toLanguage: string, information?: string, deckType?: 'exercises' | 'grammar-rules') => void;
+  editingDeck?: { id: string; name: string; fromLanguage: string; toLanguage: string; information?: string };
+  onAdd: (name: string, fromLanguage: string, toLanguage: string, information?: string) => void;
+  onUpdate?: (id: string, name: string, fromLanguage: string, toLanguage: string, information?: string) => void;
   onBack: () => void;
 }
 
-export const DeckForm = ({ folderName, defaultFromLanguage, defaultToLanguage, categoryId, editingDeck, onAdd, onUpdate, onBack }: DeckFormProps) => {
+export const DeckForm = ({ folderName, defaultFromLanguage, defaultToLanguage, editingDeck, onAdd, onUpdate, onBack }: DeckFormProps) => {
   const [name, setName] = useState(editingDeck?.name || "");
   const [fromLanguage, setFromLanguage] = useState(editingDeck?.fromLanguage || defaultFromLanguage || "English");
   const [toLanguage, setToLanguage] = useState(editingDeck?.toLanguage || defaultToLanguage || "Spanish");
   const [information, setInformation] = useState(editingDeck?.information || "");
-  const [deckType, setDeckType] = useState<'exercises' | 'grammar-rules'>(editingDeck?.deckType || 'exercises');
   const { toast } = useToast();
   const isEditing = !!editingDeck;
-  const isGrammarCategory = categoryId === 'grammar';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,13 +38,13 @@ export const DeckForm = ({ folderName, defaultFromLanguage, defaultToLanguage, c
     }
 
     if (isEditing && editingDeck && onUpdate) {
-      onUpdate(editingDeck.id, name.trim(), fromLanguage.trim(), toLanguage.trim(), information.trim() || undefined, deckType);
+      onUpdate(editingDeck.id, name.trim(), fromLanguage.trim(), toLanguage.trim(), information.trim() || undefined);
       toast({
         title: "Success!",
         description: "Deck updated successfully",
       });
     } else {
-      onAdd(name.trim(), fromLanguage.trim(), toLanguage.trim(), information.trim() || undefined, deckType);
+      onAdd(name.trim(), fromLanguage.trim(), toLanguage.trim(), information.trim() || undefined);
       toast({
         title: "Success!",
         description: "Deck created successfully",
@@ -79,22 +75,6 @@ export const DeckForm = ({ folderName, defaultFromLanguage, defaultToLanguage, c
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {isGrammarCategory && (
-              <div className="space-y-2">
-                <Label>Deck Type</Label>
-                <RadioGroup value={deckType} onValueChange={(value) => setDeckType(value as 'exercises' | 'grammar-rules')}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="exercises" id="exercises" />
-                    <Label htmlFor="exercises" className="font-normal cursor-pointer">Exercises</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="grammar-rules" id="grammar-rules" />
-                    <Label htmlFor="grammar-rules" className="font-normal cursor-pointer">Grammar Rules</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            )}
-            
             <div className="space-y-2">
               <Label htmlFor="name">Deck Name</Label>
               <Input

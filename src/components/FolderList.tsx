@@ -13,6 +13,7 @@ export interface Folder {
   categoryId: string;
   parentFolderId?: string;
   description?: string;
+  type?: 'grammar-rules' | 'grammar-exercises';
   createdAt: Date;
 }
 
@@ -25,9 +26,10 @@ interface FolderListProps {
   onEditFolder: (id: string) => void;
   onDeleteFolder: (id: string) => void;
   onBack: () => void;
+  hideAddButton?: boolean;
 }
 
-export const FolderList = ({ folders, categoryName, categoryId, onSelectFolder, onAddFolder, onEditFolder, onDeleteFolder, onBack }: FolderListProps) => {
+export const FolderList = ({ folders, categoryName, categoryId, onSelectFolder, onAddFolder, onEditFolder, onDeleteFolder, onBack, hideAddButton = false }: FolderListProps) => {
   const isGrammarCategory = categoryId === 'grammar';
   const isGrammarContentView = categoryName === 'Grammar content';
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -68,10 +70,12 @@ export const FolderList = ({ folders, categoryName, categoryId, onSelectFolder, 
             </div>
           </div>
         </div>
-        <Button onClick={onAddFolder}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Folder
-        </Button>
+        {!hideAddButton && (
+          <Button onClick={onAddFolder}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Folder
+          </Button>
+        )}
       </div>
 
       {folders.length === 0 ? (
@@ -129,28 +133,30 @@ export const FolderList = ({ folders, categoryName, categoryId, onSelectFolder, 
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEditFolder(folder.id);
-                      }}
-                    >
-                      <Pencil className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteClick(folder.id);
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  {!folder.type && (
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditFolder(folder.id);
+                        }}
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(folder.id);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

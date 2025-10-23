@@ -183,7 +183,39 @@ const Index = () => {
       description,
       createdAt: new Date(),
     };
-    setFolders(prev => [...prev, newFolder]);
+    
+    // If this is a grammar content folder (has a parent), automatically create two sub-folders
+    const parentFolder = parentFolderId ? folders.find(f => f.id === parentFolderId) : null;
+    const isGrammarContentFolder = parentFolder && parentFolder.categoryId === 'grammar' && !parentFolder.parentFolderId;
+    
+    if (isGrammarContentFolder) {
+      const grammarRulesFolder: Folder = {
+        id: crypto.randomUUID(),
+        name: 'Grammar rules',
+        fromLanguage,
+        toLanguage,
+        categoryId: 'grammar',
+        parentFolderId: newFolder.id,
+        type: 'grammar-rules',
+        createdAt: new Date(),
+      };
+      
+      const grammarExercisesFolder: Folder = {
+        id: crypto.randomUUID(),
+        name: 'Grammar exercises',
+        fromLanguage,
+        toLanguage,
+        categoryId: 'grammar',
+        parentFolderId: newFolder.id,
+        type: 'grammar-exercises',
+        createdAt: new Date(),
+      };
+      
+      setFolders(prev => [...prev, newFolder, grammarRulesFolder, grammarExercisesFolder]);
+    } else {
+      setFolders(prev => [...prev, newFolder]);
+    }
+    
     setMode('folders');
   };
 
@@ -221,8 +253,12 @@ const Index = () => {
     });
   };
 
-  const addDeck = (name: string, fromLanguage: string, toLanguage: string, information?: string, deckType?: 'exercises' | 'grammar-rules') => {
+  const addDeck = (name: string, fromLanguage: string, toLanguage: string, information?: string) => {
     if (!navigation.currentFolderId) return;
+    
+    // Determine deck type based on parent folder
+    const currentFolder = folders.find(f => f.id === navigation.currentFolderId);
+    const deckType = currentFolder?.type === 'grammar-rules' ? 'grammar-rules' : undefined;
     
     const newDeck: Deck = {
       id: crypto.randomUUID(),
@@ -238,9 +274,9 @@ const Index = () => {
     setMode('decks');
   };
 
-  const updateDeck = (id: string, name: string, fromLanguage: string, toLanguage: string, information?: string, deckType?: 'exercises' | 'grammar-rules') => {
+  const updateDeck = (id: string, name: string, fromLanguage: string, toLanguage: string, information?: string) => {
     setDecks(prev => prev.map(deck => 
-      deck.id === id ? { ...deck, name, fromLanguage, toLanguage, information, deckType } : deck
+      deck.id === id ? { ...deck, name, fromLanguage, toLanguage, information } : deck
     ));
     setMode('decks');
     toast({
@@ -319,14 +355,30 @@ const Index = () => {
 
   const selectFolder = (folderId: string) => {
     const folder = folders.find(f => f.id === folderId);
-    // For Grammar language folders (no parent), show sub-folders instead of decks
-    if (folder && folder.categoryId === 'grammar' && !folder.parentFolderId) {
+    
+    if (!folder) return;
+    
+    // Grammar structure: Language folder -> Grammar content folder -> Grammar rules/exercises folders -> Decks
+    // For Grammar language folders (no parent), show grammar content sub-folders
+    if (folder.categoryId === 'grammar' && !folder.parentFolderId) {
       setNavigation(prev => ({ ...prev, currentFolderId: folderId }));
       setMode('folders');
-    } else {
-      setNavigation(prev => ({ ...prev, currentFolderId: folderId }));
-      setMode('decks');
+      return;
     }
+    
+    // For Grammar content folders (parent is language folder), show grammar rules/exercises sub-folders
+    const parentFolder = folder.parentFolderId ? folders.find(f => f.id === folder.parentFolderId) : null;
+    const isGrammarContentFolder = parentFolder && parentFolder.categoryId === 'grammar' && !parentFolder.parentFolderId;
+    
+    if (isGrammarContentFolder) {
+      setNavigation(prev => ({ ...prev, currentFolderId: folderId }));
+      setMode('folders');
+      return;
+    }
+    
+    // For everything else (including grammar rules/exercises folders), show decks
+    setNavigation(prev => ({ ...prev, currentFolderId: folderId }));
+    setMode('decks');
   };
 
   const getCurrentCategory = () => {
@@ -334,12 +386,9 @@ const Index = () => {
   };
 
   const getCurrentCategoryFolders = () => {
-    // If we're in a grammar language folder, show its sub-folders
+    // If we're inside a folder, show its sub-folders
     if (navigation.currentFolderId) {
-      const currentFolder = folders.find(f => f.id === navigation.currentFolderId);
-      if (currentFolder && currentFolder.categoryId === 'grammar' && !currentFolder.parentFolderId) {
-        return folders.filter(f => f.parentFolderId === navigation.currentFolderId);
-      }
+      return folders.filter(f => f.parentFolderId === navigation.currentFolderId);
     }
     // Otherwise, show top-level folders for the current category
     return folders.filter(f => f.categoryId === navigation.currentCategoryId && !f.parentFolderId);
@@ -412,10 +461,29 @@ const Index = () => {
         const currentCategory = getCurrentCategory();
         const currentFolder = getCurrentFolder();
         
-        // Check if we're viewing sub-folders within a grammar language folder
-        const isGrammarSubFolderView = currentFolder && currentFolder.categoryId === 'grammar' && !currentFolder.parentFolderId;
+        // Determine what level of folders we're showing
+        let displayName = currentCategory?.name || '';
+        let isSubFolderView = false;
+        let hideAddButton = false;
         
-        if (!currentCategory && !isGrammarSubFolderView) {
+        if (currentFolder) {
+          // If current folder is a language folder (no parent), we're showing grammar content folders
+          if (currentFolder.categoryId === 'grammar' && !currentFolder.parentFolderId) {
+            displayName = 'Grammar content';
+            isSubFolderView = true;
+          }
+          // If current folder has a parent that's a language folder, we're showing grammar rules/exercises folders (auto-created)
+          else {
+            const parentFolder = folders.find(f => f.id === currentFolder.parentFolderId);
+            if (parentFolder && !parentFolder.parentFolderId) {
+              displayName = currentFolder.name;
+              isSubFolderView = true;
+              hideAddButton = true; // Don't allow adding folders at this level (auto-created)
+            }
+          }
+        }
+        
+        if (!currentCategory && !isSubFolderView) {
           setMode('categories');
           return null;
         }
@@ -423,15 +491,20 @@ const Index = () => {
         return (
           <FolderList 
             folders={getCurrentCategoryFolders()}
-            categoryName={isGrammarSubFolderView ? 'Grammar content' : currentCategory?.name || ''}
+            categoryName={displayName}
             categoryId={currentCategory?.id || currentFolder?.categoryId || ''}
+            hideAddButton={hideAddButton}
             onSelectFolder={selectFolder}
             onAddFolder={() => setMode('add-folder')}
             onEditFolder={editFolder}
             onDeleteFolder={deleteFolder}
             onBack={() => {
-              if (isGrammarSubFolderView) {
-                // Go back to language folders
+              if (isSubFolderView && currentFolder?.parentFolderId) {
+                // Go back to parent folder
+                setNavigation(prev => ({ ...prev, currentFolderId: currentFolder.parentFolderId }));
+                setMode('folders');
+              } else if (isSubFolderView) {
+                // Go back to category folders
                 setNavigation(prev => ({ ...prev, currentFolderId: undefined }));
                 setMode('folders');
               } else {
@@ -445,14 +518,34 @@ const Index = () => {
       case 'add-folder': {
         const currentCategory = getCurrentCategory();
         const currentFolder = getCurrentFolder();
-        const isAddingGrammarSubFolder = currentFolder && currentFolder.categoryId === 'grammar' && !currentFolder.parentFolderId;
+        
+        // Determine if we're adding a grammar sub-folder
+        let parentFolderId = undefined;
+        let isSubFolder = false;
+        
+        if (currentFolder) {
+          // If we're in a language folder (no parent), we're adding a grammar content folder
+          if (currentFolder.categoryId === 'grammar' && !currentFolder.parentFolderId) {
+            parentFolderId = currentFolder.id;
+            isSubFolder = true;
+          }
+          // If we're in a grammar content folder, we're adding a grammar rules/exercises folder (which is auto-created)
+          // This case shouldn't happen as those are auto-created, but handle it anyway
+          else if (currentFolder.parentFolderId) {
+            const parentFolder = folders.find(f => f.id === currentFolder.parentFolderId);
+            if (parentFolder && !parentFolder.parentFolderId) {
+              parentFolderId = currentFolder.id;
+              isSubFolder = true;
+            }
+          }
+        }
         
         return (
           <FolderForm 
             categoryId={navigation.currentCategoryId || currentFolder?.categoryId}
             categoryName={currentCategory?.name}
-            parentFolderId={isAddingGrammarSubFolder ? currentFolder.id : undefined}
-            isSubFolder={!!isAddingGrammarSubFolder}
+            parentFolderId={parentFolderId}
+            isSubFolder={isSubFolder}
             onAdd={addFolder}
             onBack={() => setMode('folders')}
           />
@@ -515,7 +608,6 @@ const Index = () => {
             folderName={currentFolder.name}
             defaultFromLanguage={currentFolder.fromLanguage}
             defaultToLanguage={currentFolder.toLanguage}
-            categoryId={currentFolder.categoryId}
             onAdd={addDeck}
             onBack={() => setMode('decks')}
           />
@@ -532,7 +624,6 @@ const Index = () => {
         return (
           <DeckForm 
             folderName={currentFolder.name}
-            categoryId={currentFolder.categoryId}
             editingDeck={editingDeck}
             onAdd={addDeck}
             onUpdate={updateDeck}
