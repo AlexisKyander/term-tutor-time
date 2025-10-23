@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Folder } from "@/components/FolderList";
@@ -11,20 +12,21 @@ interface FolderFormProps {
   editingFolder?: Folder;
   categoryId?: string;
   categoryName?: string;
-  onAdd: (name: string, fromLanguage: string, toLanguage: string, categoryId: string) => void;
-  onUpdate?: (id: string, name: string, fromLanguage: string, toLanguage: string) => void;
+  parentFolderId?: string;
+  isSubFolder?: boolean;
+  onAdd: (name: string, fromLanguage: string, toLanguage: string, categoryId: string, parentFolderId?: string, description?: string) => void;
+  onUpdate?: (id: string, name: string, fromLanguage: string, toLanguage: string, description?: string) => void;
   onBack: () => void;
 }
 
-export const FolderForm = ({ editingFolder, categoryId, categoryName, onAdd, onUpdate, onBack }: FolderFormProps) => {
+export const FolderForm = ({ editingFolder, categoryId, categoryName, parentFolderId, isSubFolder, onAdd, onUpdate, onBack }: FolderFormProps) => {
   const isGrammarCategory = categoryId === 'grammar' || editingFolder?.categoryId === 'grammar';
+  const isGrammarSubFolder = isSubFolder && isGrammarCategory;
   
-  // Debug logging
-  console.log('FolderForm - categoryId:', categoryId);
-  console.log('FolderForm - isGrammarCategory:', isGrammarCategory);
   const [name, setName] = useState("");
   const [fromLanguage, setFromLanguage] = useState("");
   const [toLanguage, setToLanguage] = useState("");
+  const [description, setDescription] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -32,14 +34,39 @@ export const FolderForm = ({ editingFolder, categoryId, categoryName, onAdd, onU
       setName(editingFolder.name);
       setFromLanguage(editingFolder.fromLanguage);
       setToLanguage(editingFolder.toLanguage);
+      setDescription(editingFolder.description || "");
     }
   }, [editingFolder]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // For Grammar category, only name is required
-    if (isGrammarCategory) {
+    // For Grammar sub-folders (grammar content folders), only name is required
+    if (isGrammarSubFolder) {
+      if (!name.trim()) {
+        toast({
+          title: "Error",
+          description: "Please enter a folder name",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (editingFolder && onUpdate) {
+        onUpdate(editingFolder.id, name.trim(), '', '', description.trim());
+        toast({
+          title: "Success!",
+          description: "Grammar folder updated successfully",
+        });
+      } else {
+        onAdd(name.trim(), '', '', categoryId || editingFolder?.categoryId || '', parentFolderId, description.trim());
+        toast({
+          title: "Success!",
+          description: "Grammar folder created successfully",
+        });
+      }
+    } else if (isGrammarCategory && !isSubFolder) {
+      // For Grammar language folders, only name is required
       if (!name.trim()) {
         toast({
           title: "Error",
@@ -91,6 +118,7 @@ export const FolderForm = ({ editingFolder, categoryId, categoryName, onAdd, onU
     setName("");
     setFromLanguage("");
     setToLanguage("");
+    setDescription("");
   };
 
   return (
@@ -106,15 +134,40 @@ export const FolderForm = ({ editingFolder, categoryId, categoryName, onAdd, onU
           <CardDescription>
             {editingFolder 
               ? 'Update folder settings' 
-              : isGrammarCategory 
-                ? 'Create a language folder for your grammar rules'
-                : 'Create a folder to organize your vocabulary by language pairs'
+              : isGrammarSubFolder
+                ? 'Create a folder for a specific grammar topic'
+                : isGrammarCategory 
+                  ? 'Create a language folder for your grammar rules'
+                  : 'Create a folder to organize your vocabulary by language pairs'
             }
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {isGrammarCategory ? (
+            {isGrammarSubFolder ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Folder Name</Label>
+                  <Input
+                    id="name"
+                    placeholder="e.g., Articles, Past Tense, Prepositions"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description (Optional)</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Add a description for this grammar topic..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+              </>
+            ) : isGrammarCategory ? (
               <div className="space-y-2">
                 <Label htmlFor="name">Language Name</Label>
                 <Input

@@ -171,22 +171,24 @@ const Index = () => {
     setMode('folders');
   };
 
-  const addFolder = (name: string, fromLanguage: string, toLanguage: string, categoryId: string) => {
+  const addFolder = (name: string, fromLanguage: string, toLanguage: string, categoryId: string, parentFolderId?: string, description?: string) => {
     const newFolder: Folder = {
       id: crypto.randomUUID(),
       name,
       fromLanguage,
       toLanguage,
       categoryId: categoryId || navigation.currentCategoryId || 'vocabulary',
+      parentFolderId,
+      description,
       createdAt: new Date(),
     };
     setFolders(prev => [...prev, newFolder]);
     setMode('folders');
   };
 
-  const updateFolder = (id: string, name: string, fromLanguage: string, toLanguage: string) => {
+  const updateFolder = (id: string, name: string, fromLanguage: string, toLanguage: string, description?: string) => {
     setFolders(prev => prev.map(folder => 
-      folder.id === id ? { ...folder, name, fromLanguage, toLanguage } : folder
+      folder.id === id ? { ...folder, name, fromLanguage, toLanguage, description } : folder
     ));
     setMode('folders');
     toast({
@@ -314,8 +316,15 @@ const Index = () => {
   };
 
   const selectFolder = (folderId: string) => {
-    setNavigation(prev => ({ ...prev, currentFolderId: folderId }));
-    setMode('decks');
+    const folder = folders.find(f => f.id === folderId);
+    // For Grammar language folders (no parent), show sub-folders instead of decks
+    if (folder && folder.categoryId === 'grammar' && !folder.parentFolderId) {
+      setNavigation(prev => ({ ...prev, currentFolderId: folderId }));
+      setMode('folders');
+    } else {
+      setNavigation(prev => ({ ...prev, currentFolderId: folderId }));
+      setMode('decks');
+    }
   };
 
   const getCurrentCategory = () => {
@@ -323,7 +332,15 @@ const Index = () => {
   };
 
   const getCurrentCategoryFolders = () => {
-    return folders.filter(f => f.categoryId === navigation.currentCategoryId);
+    // If we're in a grammar language folder, show its sub-folders
+    if (navigation.currentFolderId) {
+      const currentFolder = folders.find(f => f.id === navigation.currentFolderId);
+      if (currentFolder && currentFolder.categoryId === 'grammar' && !currentFolder.parentFolderId) {
+        return folders.filter(f => f.parentFolderId === navigation.currentFolderId);
+      }
+    }
+    // Otherwise, show top-level folders for the current category
+    return folders.filter(f => f.categoryId === navigation.currentCategoryId && !f.parentFolderId);
   };
 
   const selectDeck = (deckId: string) => {
@@ -391,30 +408,49 @@ const Index = () => {
     switch (mode) {
       case 'folders': {
         const currentCategory = getCurrentCategory();
-        if (!currentCategory) {
+        const currentFolder = getCurrentFolder();
+        
+        // Check if we're viewing sub-folders within a grammar language folder
+        const isGrammarSubFolderView = currentFolder && currentFolder.categoryId === 'grammar' && !currentFolder.parentFolderId;
+        
+        if (!currentCategory && !isGrammarSubFolderView) {
           setMode('categories');
           return null;
         }
+        
         return (
           <FolderList 
             folders={getCurrentCategoryFolders()}
-            categoryName={currentCategory.name}
-            categoryId={currentCategory.id}
+            categoryName={isGrammarSubFolderView ? 'Grammar content' : currentCategory?.name || ''}
+            categoryId={currentCategory?.id || currentFolder?.categoryId || ''}
             onSelectFolder={selectFolder}
             onAddFolder={() => setMode('add-folder')}
             onEditFolder={editFolder}
             onDeleteFolder={deleteFolder}
-            onBack={() => setMode('categories')}
+            onBack={() => {
+              if (isGrammarSubFolderView) {
+                // Go back to language folders
+                setNavigation(prev => ({ ...prev, currentFolderId: undefined }));
+                setMode('folders');
+              } else {
+                setMode('categories');
+              }
+            }}
           />
         );
       }
 
       case 'add-folder': {
         const currentCategory = getCurrentCategory();
+        const currentFolder = getCurrentFolder();
+        const isAddingGrammarSubFolder = currentFolder && currentFolder.categoryId === 'grammar' && !currentFolder.parentFolderId;
+        
         return (
           <FolderForm 
-            categoryId={navigation.currentCategoryId}
+            categoryId={navigation.currentCategoryId || currentFolder?.categoryId}
             categoryName={currentCategory?.name}
+            parentFolderId={isAddingGrammarSubFolder ? currentFolder.id : undefined}
+            isSubFolder={!!isAddingGrammarSubFolder}
             onAdd={addFolder}
             onBack={() => setMode('folders')}
           />
@@ -424,6 +460,8 @@ const Index = () => {
       case 'edit-folder': {
         const editingFolder = folders.find(f => f.id === navigation.editingFolderId);
         const currentCategory = getCurrentCategory();
+        const isGrammarSubFolder = editingFolder && !!editingFolder.parentFolderId;
+        
         if (!editingFolder) {
           setMode('folders');
           return null;
@@ -432,6 +470,7 @@ const Index = () => {
           <FolderForm 
             editingFolder={editingFolder}
             categoryName={currentCategory?.name}
+            isSubFolder={isGrammarSubFolder}
             onAdd={addFolder}
             onUpdate={updateFolder}
             onBack={() => setMode('folders')}
