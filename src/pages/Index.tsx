@@ -4,6 +4,7 @@ import { VocabularyList } from "@/components/VocabularyList";
 import { VocabularyEditForm } from "@/components/VocabularyEditForm";
 import { FlashcardMode } from "@/components/FlashcardMode";
 import { GrammarRuleView } from "@/components/GrammarRuleView";
+import { GrammarRulesGridView } from "@/components/GrammarRulesGridView";
 import { CategoryList, type Category } from "@/components/CategoryList";
 import { FolderList, type Folder } from "@/components/FolderList";
 import { DeckList, type Deck } from "@/components/DeckList";
@@ -220,7 +221,7 @@ const Index = () => {
     });
   };
 
-  const addDeck = (name: string, fromLanguage: string, toLanguage: string, information?: string) => {
+  const addDeck = (name: string, fromLanguage: string, toLanguage: string, information?: string, deckType?: 'exercises' | 'grammar-rules') => {
     if (!navigation.currentFolderId) return;
     
     const newDeck: Deck = {
@@ -230,15 +231,16 @@ const Index = () => {
       fromLanguage,
       toLanguage,
       information,
+      deckType,
       createdAt: new Date(),
     };
     setDecks(prev => [...prev, newDeck]);
     setMode('decks');
   };
 
-  const updateDeck = (id: string, name: string, fromLanguage: string, toLanguage: string, information?: string) => {
+  const updateDeck = (id: string, name: string, fromLanguage: string, toLanguage: string, information?: string, deckType?: 'exercises' | 'grammar-rules') => {
     setDecks(prev => prev.map(deck => 
-      deck.id === id ? { ...deck, name, fromLanguage, toLanguage, information } : deck
+      deck.id === id ? { ...deck, name, fromLanguage, toLanguage, information, deckType } : deck
     ));
     setMode('decks');
     toast({
@@ -513,6 +515,7 @@ const Index = () => {
             folderName={currentFolder.name}
             defaultFromLanguage={currentFolder.fromLanguage}
             defaultToLanguage={currentFolder.toLanguage}
+            categoryId={currentFolder.categoryId}
             onAdd={addDeck}
             onBack={() => setMode('decks')}
           />
@@ -529,6 +532,7 @@ const Index = () => {
         return (
           <DeckForm 
             folderName={currentFolder.name}
+            categoryId={currentFolder.categoryId}
             editingDeck={editingDeck}
             onAdd={addDeck}
             onUpdate={updateDeck}
@@ -544,6 +548,20 @@ const Index = () => {
           setMode('decks');
           return null;
         }
+        
+        // If it's a grammar-rules deck, show grid view
+        if (currentDeck.deckType === 'grammar-rules') {
+          const grammarRules = getCurrentVocabulary().filter(v => v.type === 'grammar-rule');
+          return (
+            <GrammarRulesGridView 
+              items={grammarRules}
+              deckName={currentDeck.name}
+              onBack={() => setMode('decks')}
+              onAddWord={() => setMode('add-word')}
+            />
+          );
+        }
+        
         return (
           <VocabularyList 
             vocabulary={getCurrentVocabulary()}
@@ -571,6 +589,7 @@ const Index = () => {
             deckName={currentDeck.name}
             deckId={currentDeck.id}
             categoryId={currentFolder.categoryId}
+            deckType={currentDeck.deckType}
             onAdd={addVocabulary}
             onBack={() => setMode('vocabulary')}
           />

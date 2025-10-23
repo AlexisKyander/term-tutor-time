@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, BookOpen, Plus, Trash2, Brain, Settings, CheckCircle, Pencil, Eye, Info } from "lucide-react";
 
 export interface Deck {
@@ -12,6 +13,7 @@ export interface Deck {
   fromLanguage: string;
   toLanguage: string;
   information?: string;
+  deckType?: 'exercises' | 'grammar-rules';
   createdAt: Date;
 }
 
@@ -117,6 +119,9 @@ export const DeckList = ({
                       <div>
                         <div className="flex items-center space-x-2">
                           <CardTitle className="text-lg">{deck.name}</CardTitle>
+                          {deck.deckType === 'grammar-rules' && (
+                            <Badge variant="secondary" className="text-xs">Grammar Rules</Badge>
+                          )}
                           {deck.information && (
                             <HoverCard>
                               <HoverCardTrigger asChild>

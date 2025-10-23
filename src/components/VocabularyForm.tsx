@@ -29,10 +29,11 @@ interface VocabularyFormProps {
   deckName: string;
   deckId: string;
   categoryId?: string;
+  deckType?: 'exercises' | 'grammar-rules';
 }
 
-export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId }: VocabularyFormProps) => {
-  const [cardType, setCardType] = useState<'practice' | 'grammar-rule'>('practice');
+export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, deckType }: VocabularyFormProps) => {
+  const [cardType, setCardType] = useState<'practice' | 'grammar-rule'>(deckType === 'grammar-rules' ? 'grammar-rule' : 'practice');
   const [word, setWord] = useState("");
   const [translation, setTranslation] = useState("");
   const [comment, setComment] = useState("");
@@ -131,7 +132,7 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId }: 
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {categoryId === 'grammar' && (
+            {categoryId === 'grammar' && deckType !== 'grammar-rules' && (
               <div className="space-y-2">
                 <Label>Card Type</Label>
                 <RadioGroup value={cardType} onValueChange={(value) => setCardType(value as 'practice' | 'grammar-rule')}>
@@ -167,7 +168,7 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId }: 
                     placeholder="Enter the grammar rule (you can use markdown for tables)"
                     value={rule}
                     onChange={(e) => setRule(e.target.value)}
-                    className="min-h-[200px]"
+                    className="min-h-[300px]"
                   />
                   <p className="text-xs text-muted-foreground">
                     Tip: You can format tables using markdown syntax
