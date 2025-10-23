@@ -188,12 +188,24 @@ const Index = () => {
     const parentFolder = parentFolderId ? folders.find(f => f.id === parentFolderId) : null;
     const isGrammarContentFolder = parentFolder && parentFolder.categoryId === 'grammar' && !parentFolder.parentFolderId;
     
+    console.log('addFolder debug:', {
+      name,
+      parentFolderId,
+      parentFolder: parentFolder ? { id: parentFolder.id, name: parentFolder.name, categoryId: parentFolder.categoryId, parentFolderId: parentFolder.parentFolderId } : null,
+      isGrammarContentFolder,
+      allFolders: folders.map(f => ({ id: f.id, name: f.name, parentId: f.parentFolderId }))
+    });
+    
     if (isGrammarContentFolder) {
+      // Get language from parent folder if not provided
+      const lang = fromLanguage || parentFolder.fromLanguage || '';
+      const targetLang = toLanguage || parentFolder.toLanguage || '';
+      
       const grammarRulesFolder: Folder = {
         id: crypto.randomUUID(),
         name: 'Grammar rules',
-        fromLanguage,
-        toLanguage,
+        fromLanguage: lang,
+        toLanguage: targetLang,
         categoryId: 'grammar',
         parentFolderId: newFolder.id,
         type: 'grammar-rules',
@@ -203,13 +215,18 @@ const Index = () => {
       const grammarExercisesFolder: Folder = {
         id: crypto.randomUUID(),
         name: 'Grammar exercises',
-        fromLanguage,
-        toLanguage,
+        fromLanguage: lang,
+        toLanguage: targetLang,
         categoryId: 'grammar',
         parentFolderId: newFolder.id,
         type: 'grammar-exercises',
         createdAt: new Date(),
       };
+      
+      console.log('Creating grammar content folder with sub-folders:', {
+        newFolder: newFolder.name,
+        subFolders: [grammarRulesFolder.name, grammarExercisesFolder.name]
+      });
       
       setFolders(prev => [...prev, newFolder, grammarRulesFolder, grammarExercisesFolder]);
     } else {
