@@ -18,6 +18,10 @@ interface FolderFormProps {
 
 export const FolderForm = ({ editingFolder, categoryId, categoryName, onAdd, onUpdate, onBack }: FolderFormProps) => {
   const isGrammarCategory = categoryId === 'grammar' || editingFolder?.categoryId === 'grammar';
+  
+  // Debug logging
+  console.log('FolderForm - categoryId:', categoryId);
+  console.log('FolderForm - isGrammarCategory:', isGrammarCategory);
   const [name, setName] = useState("");
   const [fromLanguage, setFromLanguage] = useState("");
   const [toLanguage, setToLanguage] = useState("");
