@@ -16,6 +16,7 @@ export interface Folder {
 interface FolderListProps {
   folders: Folder[];
   categoryName: string;
+  categoryId: string;
   onSelectFolder: (folderId: string) => void;
   onAddFolder: () => void;
   onEditFolder: (id: string) => void;
@@ -23,7 +24,8 @@ interface FolderListProps {
   onBack: () => void;
 }
 
-export const FolderList = ({ folders, categoryName, onSelectFolder, onAddFolder, onEditFolder, onDeleteFolder, onBack }: FolderListProps) => {
+export const FolderList = ({ folders, categoryName, categoryId, onSelectFolder, onAddFolder, onEditFolder, onDeleteFolder, onBack }: FolderListProps) => {
+  const isGrammarCategory = categoryId === 'grammar';
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
 
@@ -46,7 +48,12 @@ export const FolderList = ({ folders, categoryName, onSelectFolder, onAddFolder,
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">{categoryName} Folders</h2>
-          <p className="text-muted-foreground">Organize your {categoryName.toLowerCase()} by language pairs</p>
+          <p className="text-muted-foreground">
+            {isGrammarCategory 
+              ? 'Organize your grammar rules by language'
+              : 'Organize your vocabulary by language pairs'
+            }
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={onBack}>
@@ -84,9 +91,11 @@ export const FolderList = ({ folders, categoryName, onSelectFolder, onAddFolder,
                     </div>
                     <div>
                       <CardTitle className="text-lg">{folder.name}</CardTitle>
-                      <CardDescription>
-                        {folder.fromLanguage} → {folder.toLanguage}
-                      </CardDescription>
+                      {!isGrammarCategory && (
+                        <CardDescription>
+                          {folder.fromLanguage} → {folder.toLanguage}
+                        </CardDescription>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

@@ -399,6 +399,7 @@ const Index = () => {
           <FolderList 
             folders={getCurrentCategoryFolders()}
             categoryName={currentCategory.name}
+            categoryId={currentCategory.id}
             onSelectFolder={selectFolder}
             onAddFolder={() => setMode('add-folder')}
             onEditFolder={editFolder}
@@ -408,17 +409,21 @@ const Index = () => {
         );
       }
 
-      case 'add-folder':
+      case 'add-folder': {
+        const currentCategory = getCurrentCategory();
         return (
           <FolderForm 
             categoryId={navigation.currentCategoryId}
+            categoryName={currentCategory?.name}
             onAdd={addFolder}
             onBack={() => setMode('folders')}
           />
         );
+      }
 
       case 'edit-folder': {
         const editingFolder = folders.find(f => f.id === navigation.editingFolderId);
+        const currentCategory = getCurrentCategory();
         if (!editingFolder) {
           setMode('folders');
           return null;
@@ -426,6 +431,7 @@ const Index = () => {
         return (
           <FolderForm 
             editingFolder={editingFolder}
+            categoryName={currentCategory?.name}
             onAdd={addFolder}
             onUpdate={updateFolder}
             onBack={() => setMode('folders')}

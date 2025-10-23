@@ -10,12 +10,14 @@ import type { Folder } from "@/components/FolderList";
 interface FolderFormProps {
   editingFolder?: Folder;
   categoryId?: string;
+  categoryName?: string;
   onAdd: (name: string, fromLanguage: string, toLanguage: string, categoryId: string) => void;
   onUpdate?: (id: string, name: string, fromLanguage: string, toLanguage: string) => void;
   onBack: () => void;
 }
 
-export const FolderForm = ({ editingFolder, categoryId, onAdd, onUpdate, onBack }: FolderFormProps) => {
+export const FolderForm = ({ editingFolder, categoryId, categoryName, onAdd, onUpdate, onBack }: FolderFormProps) => {
+  const isGrammarCategory = categoryId === 'grammar' || editingFolder?.categoryId === 'grammar';
   const [name, setName] = useState("");
   const [fromLanguage, setFromLanguage] = useState("");
   const [toLanguage, setToLanguage] = useState("");
@@ -32,27 +34,54 @@ export const FolderForm = ({ editingFolder, categoryId, onAdd, onUpdate, onBack 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim() || !fromLanguage.trim() || !toLanguage.trim()) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (editingFolder && onUpdate) {
-      onUpdate(editingFolder.id, name.trim(), fromLanguage.trim(), toLanguage.trim());
-      toast({
-        title: "Success!",
-        description: "Folder updated successfully",
-      });
+    // For Grammar category, only name is required
+    if (isGrammarCategory) {
+      if (!name.trim()) {
+        toast({
+          title: "Error",
+          description: "Please enter a language name",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (editingFolder && onUpdate) {
+        onUpdate(editingFolder.id, name.trim(), '', '');
+        toast({
+          title: "Success!",
+          description: "Language folder updated successfully",
+        });
+      } else {
+        onAdd(name.trim(), '', '', categoryId || editingFolder?.categoryId || '');
+        toast({
+          title: "Success!",
+          description: "Language folder created successfully",
+        });
+      }
     } else {
-      onAdd(name.trim(), fromLanguage.trim(), toLanguage.trim(), categoryId || editingFolder?.categoryId || '');
-      toast({
-        title: "Success!",
-        description: "Folder created successfully",
-      });
+      // For Vocabulary category, all fields are required
+      if (!name.trim() || !fromLanguage.trim() || !toLanguage.trim()) {
+        toast({
+          title: "Error",
+          description: "Please fill in all fields",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (editingFolder && onUpdate) {
+        onUpdate(editingFolder.id, name.trim(), fromLanguage.trim(), toLanguage.trim());
+        toast({
+          title: "Success!",
+          description: "Folder updated successfully",
+        });
+      } else {
+        onAdd(name.trim(), fromLanguage.trim(), toLanguage.trim(), categoryId || editingFolder?.categoryId || '');
+        toast({
+          title: "Success!",
+          description: "Folder created successfully",
+        });
+      }
     }
     
     setName("");
@@ -71,41 +100,61 @@ export const FolderForm = ({ editingFolder, categoryId, onAdd, onUpdate, onBack 
         <CardHeader>
           <CardTitle>{editingFolder ? 'Edit Folder' : 'Create New Folder'}</CardTitle>
           <CardDescription>
-            {editingFolder ? 'Update folder settings' : 'Create a folder to organize your vocabulary by language pairs'}
+            {editingFolder 
+              ? 'Update folder settings' 
+              : isGrammarCategory 
+                ? 'Create a language folder for your grammar rules'
+                : 'Create a folder to organize your vocabulary by language pairs'
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Folder Name</Label>
-              <Input
-                id="name"
-                placeholder="e.g., English-Spanish, French-German"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                autoFocus
-              />
-            </div>
+            {isGrammarCategory ? (
+              <div className="space-y-2">
+                <Label htmlFor="name">Language Name</Label>
+                <Input
+                  id="name"
+                  placeholder="e.g., French, Swedish, Spanish"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  autoFocus
+                />
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Folder Name</Label>
+                  <Input
+                    id="name"
+                    placeholder="e.g., English-Spanish, French-German"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    autoFocus
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="fromLanguage">From Language</Label>
-              <Input
-                id="fromLanguage"
-                placeholder="e.g., English"
-                value={fromLanguage}
-                onChange={(e) => setFromLanguage(e.target.value)}
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="fromLanguage">From Language</Label>
+                  <Input
+                    id="fromLanguage"
+                    placeholder="e.g., English"
+                    value={fromLanguage}
+                    onChange={(e) => setFromLanguage(e.target.value)}
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="toLanguage">To Language</Label>
-              <Input
-                id="toLanguage"
-                placeholder="e.g., Spanish"
-                value={toLanguage}
-                onChange={(e) => setToLanguage(e.target.value)}
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="toLanguage">To Language</Label>
+                  <Input
+                    id="toLanguage"
+                    placeholder="e.g., Spanish"
+                    value={toLanguage}
+                    onChange={(e) => setToLanguage(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
             
             <div className="flex gap-2">
               <Button type="submit" className="flex-1">
