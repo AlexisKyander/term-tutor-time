@@ -262,7 +262,14 @@ const Index = () => {
     
     // Determine deck type based on parent folder
     const currentFolder = folders.find(f => f.id === navigation.currentFolderId);
+    console.log('addDeck - currentFolder:', {
+      id: currentFolder?.id,
+      name: currentFolder?.name,
+      type: currentFolder?.type,
+      allFolders: folders.map(f => ({ id: f.id, name: f.name, type: f.type }))
+    });
     const deckType = currentFolder?.type === 'grammar-rules' ? 'grammar-rules' : undefined;
+    console.log('addDeck - deckType will be:', deckType);
     
     const newDeck: Deck = {
       id: crypto.randomUUID(),
