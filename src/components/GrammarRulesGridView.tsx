@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, Plus } from "lucide-react";
 import { VocabularyItem } from "@/pages/Index";
 
@@ -13,7 +13,7 @@ interface GrammarRulesGridViewProps {
 }
 
 export const GrammarRulesGridView = ({ items, deckName, onBack, onAddWord }: GrammarRulesGridViewProps) => {
-  const [flippedId, setFlippedId] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<VocabularyItem | null>(null);
 
   const renderRule = (rule: string) => {
     const lines = rule.split('\n');
@@ -111,54 +111,30 @@ export const GrammarRulesGridView = ({ items, deckName, onBack, onAddWord }: Gra
           items.map((item) => (
             <Card 
               key={item.id} 
-              className="cursor-pointer transition-transform hover:shadow-lg"
-              onClick={() => setFlippedId(flippedId === item.id ? null : item.id)}
-              style={{ transform: flippedId === item.id ? 'scale(1.03)' : 'scale(1)' }}
+              className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 animate-fade-in"
+              onClick={() => setSelectedItem(item)}
             >
-              <div style={{ perspective: '1000px' }}>
-                <div
-                  style={{
-                    position: 'relative',
-                    transformStyle: 'preserve-3d',
-                    transition: 'transform 0.6s',
-                    transform: flippedId === item.id ? 'rotateY(180deg)' : 'rotateY(0deg)',
-                    minHeight: '180px'
-                  }}
-                >
-                  {/* Front */}
-                  <div
-                    style={{ backfaceVisibility: 'hidden', position: 'absolute', inset: 0, padding: '1.5rem' }}
-                  >
-                    <CardHeader className="p-0">
-                      <CardTitle className="text-lg">{item.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0 pt-4">
-                      <p className="text-sm text-muted-foreground">Click to view rule</p>
-                    </CardContent>
-                  </div>
-
-                  {/* Back */}
-                  <div
-                    style={{
-                      backfaceVisibility: 'hidden',
-                      transform: 'rotateY(180deg)',
-                      position: 'absolute',
-                      inset: 0,
-                      padding: '1.5rem',
-                      overflowY: 'auto'
-                    }}
-                  >
-                    <div className="prose prose-sm max-w-none dark:prose-invert">
-                      {item.rule && renderRule(item.rule)}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <CardHeader>
+                <CardTitle className="text-lg">{item.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">Click to view rule</p>
+              </CardContent>
             </Card>
           ))
         )}
       </div>
 
+      <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">{selectedItem?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="prose prose-sm max-w-none dark:prose-invert mt-4">
+            {selectedItem?.rule && renderRule(selectedItem.rule)}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
