@@ -215,7 +215,19 @@ const Index = () => {
         createdAt: new Date(),
       };
       
+      // Auto-create a singleton deck for Grammar Rules folder
+      const grammarRulesDeck: Deck = {
+        id: crypto.randomUUID(),
+        name: 'Grammar Rules',
+        folderId: grammarRulesFolder.id,
+        fromLanguage: lang,
+        toLanguage: targetLang,
+        deckType: 'grammar-rules',
+        createdAt: new Date(),
+      };
+      
       setFolders(prev => [...prev, newFolder, grammarRulesFolder, grammarExercisesFolder]);
+      setDecks(prev => [...prev, grammarRulesDeck]);
     } else {
       setFolders(prev => [...prev, newFolder]);
     }
@@ -387,9 +399,15 @@ const Index = () => {
       return;
     }
     
-    // For everything else (including grammar rules/exercises folders), show decks
-    setNavigation(prev => ({ ...prev, currentFolderId: folderId }));
-    setMode('decks');
+    // For everything else, determine view based on folder type
+    if (folder.type === 'grammar-rules') {
+      const deck = ensureGrammarRulesDeck(folder);
+      setNavigation(prev => ({ ...prev, currentFolderId: folderId, currentDeckId: deck?.id }));
+      setMode('vocabulary');
+    } else {
+      setNavigation(prev => ({ ...prev, currentFolderId: folderId }));
+      setMode('decks');
+    }
   };
 
   const getCurrentCategory = () => {
@@ -440,6 +458,24 @@ const Index = () => {
 
   const getCurrentDecks = () => {
     return decks.filter(d => d.folderId === navigation.currentFolderId);
+  };
+
+  // Ensure a singleton grammar-rules deck exists for a grammar rules folder
+  const ensureGrammarRulesDeck = (folder: Folder) => {
+    let deck = decks.find(d => d.folderId === folder.id && d.deckType === 'grammar-rules');
+    if (!deck) {
+      deck = {
+        id: crypto.randomUUID(),
+        name: 'Grammar Rules',
+        folderId: folder.id,
+        fromLanguage: folder.fromLanguage,
+        toLanguage: folder.toLanguage,
+        deckType: 'grammar-rules',
+        createdAt: new Date(),
+      };
+      setDecks(prev => [...prev, deck!]);
+    }
+    return deck;
   };
 
   const getCurrentVocabulary = () => {
@@ -657,8 +693,8 @@ const Index = () => {
           return (
             <GrammarRulesGridView 
               items={grammarRules}
-              deckName={currentDeck.name}
-              onBack={() => setMode('decks')}
+              deckName={currentFolder.name}
+              onBack={() => setMode(currentFolder.type === 'grammar-rules' ? 'folders' : 'decks')}
               onAddWord={() => setMode('add-word')}
             />
           );
