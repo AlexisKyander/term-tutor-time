@@ -55,7 +55,14 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   // Handle Enter key when showing result
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && showResult) {
+      if (e.key !== 'Enter') return;
+
+      const target = e.target as HTMLElement | null;
+      const tag = (target?.tagName || '').toLowerCase();
+      const isFormField = tag === 'input' || tag === 'textarea' || tag === 'select' || (target as any)?.isContentEditable;
+      if (isFormField) return; // Don't advance when Enter originates from an input/field
+
+      if (showResult) {
         nextCard();
       }
     };
@@ -249,6 +256,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
+      e.stopPropagation();
       e.preventDefault();
       if (showResult) {
         nextCard();
