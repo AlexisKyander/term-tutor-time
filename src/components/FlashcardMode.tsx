@@ -249,6 +249,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
+      e.preventDefault();
       if (showResult) {
         nextCard();
       } else {
