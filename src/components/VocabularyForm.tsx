@@ -14,9 +14,12 @@ export interface VocabularyItem {
   translation: string;
   comment: string;
   image?: string;
-  type?: 'practice' | 'grammar-rule';
+  type?: 'practice' | 'grammar-rule' | 'grammar-exercise';
   title?: string;
   rule?: string;
+  exerciseDescription?: string;
+  question?: string;
+  answer?: string;
   language: string;
   targetLanguage: string;
   deckId: string;
@@ -24,22 +27,29 @@ export interface VocabularyItem {
 }
 
 interface VocabularyFormProps {
-  onAdd: (item: { word: string; translation: string; comment: string; image?: string; type?: 'practice' | 'grammar-rule'; title?: string; rule?: string; deckId: string }) => void;
+  onAdd: (item: { word: string; translation: string; comment: string; image?: string; type?: 'practice' | 'grammar-rule' | 'grammar-exercise'; title?: string; rule?: string; exerciseDescription?: string; question?: string; answer?: string; deckId: string }) => void;
   onBack: () => void;
   deckName: string;
   deckId: string;
   categoryId?: string;
-  deckType?: 'exercises' | 'grammar-rules';
+  deckType?: 'exercises' | 'grammar-rules' | 'grammar-exercises';
+  existingExerciseDescription?: string;
 }
 
-export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, deckType }: VocabularyFormProps) => {
-  const [cardType, setCardType] = useState<'practice' | 'grammar-rule'>(deckType === 'grammar-rules' ? 'grammar-rule' : 'practice');
+export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, deckType, existingExerciseDescription }: VocabularyFormProps) => {
+  const [cardType, setCardType] = useState<'practice' | 'grammar-rule' | 'grammar-exercise'>(
+    deckType === 'grammar-rules' ? 'grammar-rule' : 
+    deckType === 'grammar-exercises' ? 'grammar-exercise' : 'practice'
+  );
   const [word, setWord] = useState("");
   const [translation, setTranslation] = useState("");
   const [comment, setComment] = useState("");
   const [image, setImage] = useState<string>("");
   const [title, setTitle] = useState("");
   const [rule, setRule] = useState("");
+  const [exerciseDescription, setExerciseDescription] = useState(existingExerciseDescription || "");
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
   const { toast } = useToast();
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,6 +95,34 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
       toast({
         title: "Success!",
         description: "Grammar rule added successfully",
+      });
+    } else if (cardType === 'grammar-exercise') {
+      if (!exerciseDescription.trim() || !question.trim() || !answer.trim()) {
+        toast({
+          title: "Error",
+          description: "Please fill in exercise description, question, and answer",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      onAdd({
+        word: "",
+        translation: "",
+        comment: "",
+        type: 'grammar-exercise',
+        exerciseDescription: exerciseDescription.trim(),
+        question: question.trim(),
+        answer: answer.trim(),
+        deckId,
+      });
+      // Keep exercise description for next card, reset question and answer
+      setQuestion("");
+      setAnswer("");
+      
+      toast({
+        title: "Success!",
+        description: "Grammar exercise added successfully",
       });
     } else {
       if (!word.trim() || !translation.trim()) {
@@ -175,6 +213,46 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
                   </p>
                 </div>
               </>
+            ) : cardType === 'grammar-exercise' ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="exerciseDescription">Exercise Description</Label>
+                  <Textarea
+                    id="exerciseDescription"
+                    placeholder="Describe the exercise (this will be prefilled for subsequent cards)"
+                    value={exerciseDescription}
+                    onChange={(e) => setExerciseDescription(e.target.value)}
+                    autoFocus={!existingExerciseDescription}
+                    rows={3}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    This description will be shown at the top of every card and will be prefilled for the next cards
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="question">Question</Label>
+                  <Textarea
+                    id="question"
+                    placeholder="Enter the question"
+                    value={question}
+                    onChange={(e) => setQuestion(e.target.value)}
+                    autoFocus={!!existingExerciseDescription}
+                    rows={2}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="answer">Answer</Label>
+                  <Textarea
+                    id="answer"
+                    placeholder="Enter the answer"
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    rows={2}
+                  />
+                </div>
+              </>
             ) : (
               <>
                 <div className="space-y-2">
@@ -250,7 +328,7 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
             <div className="flex gap-2">
               <Button type="submit" className="flex-1">
                 <Plus className="w-4 h-4 mr-2" />
-                Add {cardType === 'grammar-rule' ? 'Grammar Rule' : 'Vocabulary'}
+                Add {cardType === 'grammar-rule' ? 'Grammar Rule' : cardType === 'grammar-exercise' ? 'Exercise Card' : 'Vocabulary'}
               </Button>
               <Button type="button" variant="outline" onClick={onBack}>
                 Cancel

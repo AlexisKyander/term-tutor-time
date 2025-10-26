@@ -86,7 +86,10 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   const checkAnswer = () => {
     if (!userAnswer.trim()) return;
     
-    const correctAnswer = direction === 'forward' ? currentCard.translation : currentCard.word;
+    // For grammar exercises, check against the answer field
+    const correctAnswer = currentCard.type === 'grammar-exercise' 
+      ? currentCard.answer || ''
+      : direction === 'forward' ? currentCard.translation : currentCard.word;
     
     // Split by "/" to handle multiple valid answers
     const validAnswers = correctAnswer.split('/').map(ans => normalizeText(ans));
@@ -281,19 +284,42 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
 
       <Card className="min-h-[300px] flex items-center justify-center">
         <CardContent className="w-full text-center space-y-8">
+          {currentCard.type === 'grammar-exercise' && currentCard.exerciseDescription && (
+            <div className="p-4 bg-muted/30 rounded-lg mb-4">
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                {currentCard.exerciseDescription}
+              </p>
+            </div>
+          )}
+          
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground uppercase tracking-wider">
-              {direction === 'forward' ? currentCard.language : currentCard.targetLanguage}
-            </p>
-            <h2 className="text-4xl font-bold">
-              {direction === 'forward' ? currentCard.word : currentCard.translation}
-            </h2>
+            {currentCard.type === 'grammar-exercise' ? (
+              <>
+                <p className="text-sm text-muted-foreground uppercase tracking-wider">
+                  Question
+                </p>
+                <h2 className="text-2xl font-bold whitespace-pre-wrap">
+                  {currentCard.question}
+                </h2>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground uppercase tracking-wider">
+                  {direction === 'forward' ? currentCard.language : currentCard.targetLanguage}
+                </p>
+                <h2 className="text-4xl font-bold">
+                  {direction === 'forward' ? currentCard.word : currentCard.translation}
+                </h2>
+              </>
+            )}
           </div>
 
           <div className="space-y-6">
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground uppercase tracking-wider">
-                Translate to {direction === 'forward' ? currentCard.targetLanguage : currentCard.language}
+                {currentCard.type === 'grammar-exercise' 
+                  ? 'Your Answer' 
+                  : `Translate to ${direction === 'forward' ? currentCard.targetLanguage : currentCard.language}`}
               </p>
               <Input
                 ref={inputRef}
@@ -340,8 +366,10 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                   {!isCorrect && (
                     <p className="text-center mt-2">
                       <span className="text-muted-foreground">Correct answer: </span>
-                      <span className="font-semibold">
-                        {direction === 'forward' ? currentCard.translation : currentCard.word}
+                      <span className="font-semibold whitespace-pre-wrap">
+                        {currentCard.type === 'grammar-exercise' 
+                          ? currentCard.answer 
+                          : direction === 'forward' ? currentCard.translation : currentCard.word}
                       </span>
                     </p>
                   )}

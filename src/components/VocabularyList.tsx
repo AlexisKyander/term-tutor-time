@@ -13,7 +13,7 @@ export interface VocabularyItem {
   translation: string;
   comment: string;
   image?: string;
-  type?: 'practice' | 'grammar-rule';
+  type?: 'practice' | 'grammar-rule' | 'grammar-exercise';
   title?: string;
   rule?: string;
   language: string;

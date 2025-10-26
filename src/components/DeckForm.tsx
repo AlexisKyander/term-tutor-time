@@ -15,9 +15,10 @@ interface DeckFormProps {
   onAdd: (name: string, fromLanguage: string, toLanguage: string, information?: string) => void;
   onUpdate?: (id: string, name: string, fromLanguage: string, toLanguage: string, information?: string) => void;
   onBack: () => void;
+  folderType?: 'grammar-exercises' | 'grammar-rules';
 }
 
-export const DeckForm = ({ folderName, defaultFromLanguage, defaultToLanguage, editingDeck, onAdd, onUpdate, onBack }: DeckFormProps) => {
+export const DeckForm = ({ folderName, defaultFromLanguage, defaultToLanguage, editingDeck, onAdd, onUpdate, onBack, folderType }: DeckFormProps) => {
   const [name, setName] = useState(editingDeck?.name || "");
   const [fromLanguage, setFromLanguage] = useState(editingDeck?.fromLanguage || defaultFromLanguage || "English");
   const [toLanguage, setToLanguage] = useState(editingDeck?.toLanguage || defaultToLanguage || "Spanish");
@@ -28,13 +29,25 @@ export const DeckForm = ({ folderName, defaultFromLanguage, defaultToLanguage, e
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim() || !fromLanguage.trim() || !toLanguage.trim()) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
-      return;
+    // For grammar exercises, skip language validation
+    if (folderType === 'grammar-exercises') {
+      if (!name.trim()) {
+        toast({
+          title: "Error",
+          description: "Please enter a deck name",
+          variant: "destructive",
+        });
+        return;
+      }
+    } else {
+      if (!name.trim() || !fromLanguage.trim() || !toLanguage.trim()) {
+        toast({
+          title: "Error",
+          description: "Please fill in all fields",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     if (isEditing && editingDeck && onUpdate) {
@@ -86,26 +99,28 @@ export const DeckForm = ({ folderName, defaultFromLanguage, defaultToLanguage, e
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="fromLanguage">From Language</Label>
-                <Input
-                  id="fromLanguage"
-                  placeholder="e.g., English"
-                  value={fromLanguage}
-                  onChange={(e) => setFromLanguage(e.target.value)}
-                />
+            {folderType !== 'grammar-exercises' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fromLanguage">From Language</Label>
+                  <Input
+                    id="fromLanguage"
+                    placeholder="e.g., English"
+                    value={fromLanguage}
+                    onChange={(e) => setFromLanguage(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="toLanguage">To Language</Label>
+                  <Input
+                    id="toLanguage"
+                    placeholder="e.g., Spanish"
+                    value={toLanguage}
+                    onChange={(e) => setToLanguage(e.target.value)}
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="toLanguage">To Language</Label>
-                <Input
-                  id="toLanguage"
-                  placeholder="e.g., Spanish"
-                  value={toLanguage}
-                  onChange={(e) => setToLanguage(e.target.value)}
-                />
-              </div>
-            </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="information">Information (optional)</Label>

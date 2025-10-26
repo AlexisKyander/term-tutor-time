@@ -24,9 +24,12 @@ export interface VocabularyItem {
   translation: string;
   comment: string;
   image?: string;
-  type?: 'practice' | 'grammar-rule';
+  type?: 'practice' | 'grammar-rule' | 'grammar-exercise';
   title?: string;
   rule?: string;
+  exerciseDescription?: string;
+  question?: string;
+  answer?: string;
   language: string;
   targetLanguage: string;
   deckId: string;
@@ -280,7 +283,8 @@ const Index = () => {
       type: currentFolder?.type,
       allFolders: folders.map(f => ({ id: f.id, name: f.name, type: f.type }))
     });
-    const deckType = currentFolder?.type === 'grammar-rules' ? 'grammar-rules' : undefined;
+    const deckType = currentFolder?.type === 'grammar-rules' ? 'grammar-rules' : 
+                     currentFolder?.type === 'grammar-exercises' ? 'grammar-exercises' : undefined;
     console.log('addDeck - deckType will be:', deckType);
     
     const newDeck: Deck = {
@@ -655,6 +659,7 @@ const Index = () => {
             folderName={currentFolder.name}
             defaultFromLanguage={currentFolder.fromLanguage}
             defaultToLanguage={currentFolder.toLanguage}
+            folderType={currentFolder.type}
             onAdd={addDeck}
             onBack={() => setMode('decks')}
           />
@@ -672,6 +677,7 @@ const Index = () => {
           <DeckForm 
             folderName={currentFolder.name}
             editingDeck={editingDeck}
+            folderType={currentFolder.type}
             onAdd={addDeck}
             onUpdate={updateDeck}
             onBack={() => setMode('decks')}
@@ -722,12 +728,23 @@ const Index = () => {
           setMode('decks');
           return null;
         }
+        
+        // For grammar exercises, get existing exercise description if any
+        let existingExerciseDescription: string | undefined;
+        if (currentDeck.deckType === 'grammar-exercises') {
+          const existingCards = getCurrentVocabulary().filter(v => v.type === 'grammar-exercise');
+          if (existingCards.length > 0 && existingCards[0].exerciseDescription) {
+            existingExerciseDescription = existingCards[0].exerciseDescription;
+          }
+        }
+        
         return (
           <VocabularyForm 
             deckName={currentDeck.name}
             deckId={currentDeck.id}
             categoryId={currentFolder.categoryId}
             deckType={currentDeck.deckType}
+            existingExerciseDescription={existingExerciseDescription}
             onAdd={addVocabulary}
             onBack={() => setMode('vocabulary')}
           />

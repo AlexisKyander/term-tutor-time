@@ -13,7 +13,7 @@ export interface Deck {
   fromLanguage: string;
   toLanguage: string;
   information?: string;
-  deckType?: 'exercises' | 'grammar-rules';
+  deckType?: 'grammar-exercises' | 'grammar-rules';
   createdAt: Date;
 }
 
