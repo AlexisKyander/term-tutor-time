@@ -98,7 +98,6 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
       
       const correctAnswers = currentCard.clozeAnswers || [];
       let allCorrect = true;
-      let hasAlmostCorrect = false;
       
       for (let i = 0; i < correctAnswers.length; i++) {
         const userAns = normalizeText(clozeAnswers[i]);
@@ -106,22 +105,13 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
         
         if (userAns !== correctAns) {
           allCorrect = false;
-          // Check if almost correct
-          if (userAns.length > 2) {
-            const distance = getEditDistance(userAns, correctAns);
-            const maxLength = Math.max(userAns.length, correctAns.length);
-            if (distance <= 2 && (distance <= 2 || distance / maxLength <= 0.4)) {
-              hasAlmostCorrect = true;
-            }
-          }
         }
       }
       
       setIsCorrect(allCorrect);
       setShowResult(true);
-      (window as any).isAlmostCorrect = !allCorrect && hasAlmostCorrect;
       
-      const result = allCorrect ? 'correct' : hasAlmostCorrect ? 'almostCorrect' : 'incorrect';
+      const result = allCorrect ? 'correct' : 'incorrect';
       onUpdateStatistics(currentCard.id, result);
       
       setScore(prev => ({
@@ -360,7 +350,11 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                           return (
                             <span key={i} className="inline-flex items-center mx-1 align-baseline">
                               {showResult ? (
-                                <span className={clozeAnswers[idx] && normalizeText(clozeAnswers[idx]) === normalizeText(currentCard.clozeAnswers?.[idx] || '') ? 'text-green-600' : 'text-red-600'}>
+                                <span className={`px-2 py-1 rounded ${
+                                  normalizeText(clozeAnswers[idx]) === normalizeText(currentCard.clozeAnswers?.[idx] || '') 
+                                    ? 'bg-green-100 text-green-700 font-semibold' 
+                                    : 'bg-red-100 text-red-700 font-semibold'
+                                }`}>
                                   {clozeAnswers[idx] || '_____'}
                                 </span>
                               ) : (
@@ -372,7 +366,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                                     setClozeAnswers(newAnswers);
                                   }}
                                   onKeyDown={handleKeyPress}
-                                  placeholder={`Blank ${idx + 1}`}
+                                  placeholder=""
                                   className="inline-block w-28 h-9 text-lg text-center px-2 py-1"
                                   disabled={showResult}
                                 />
