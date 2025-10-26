@@ -111,6 +111,9 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
       setIsCorrect(allCorrect);
       setShowResult(true);
       
+      // Explicitly set to false for cloze tests to prevent showing "almost correct"
+      (window as any).isAlmostCorrect = false;
+      
       const result = allCorrect ? 'correct' : 'incorrect';
       onUpdateStatistics(currentCard.id, result);
       
@@ -449,29 +452,51 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                       {isCorrect ? 'Correct!' : (window as any).isAlmostCorrect ? 'Almost correct!' : 'Incorrect'}
                     </span>
                   </div>
-                  <p className="text-center">
-                    <span className="text-muted-foreground">Your answer: </span>
-                    <span className="font-semibold">{userAnswer}</span>
-                  </p>
-                  {!isCorrect && (
-                    <div className="text-center mt-2 space-y-1">
-                      <p className="text-muted-foreground">Correct answer{currentCard.exerciseType === 'cloze-test' ? 's' : ''}: </p>
-                      {currentCard.exerciseType === 'cloze-test' && currentCard.clozeAnswers ? (
-                        <div className="space-y-1">
-                          {currentCard.clozeAnswers.map((ans, idx) => (
-                            <p key={idx} className="font-semibold">
-                              Blank {idx + 1}: {ans}
-                            </p>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="font-semibold whitespace-pre-wrap">
-                          {currentCard.type === 'grammar-exercise' 
-                            ? currentCard.answer 
-                            : direction === 'forward' ? currentCard.translation : currentCard.word}
-                        </span>
-                      )}
+                  {currentCard.exerciseType === 'cloze-test' && currentCard.clozeAnswers ? (
+                    <div className="space-y-2">
+                      {currentCard.clozeAnswers.map((correctAns, idx) => {
+                        const userAns = clozeAnswers[idx] || '';
+                        const isBlankCorrect = normalizeText(userAns) === normalizeText(correctAns);
+                        
+                        return (
+                          <div key={idx} className="flex items-center justify-center gap-2 text-sm">
+                            <span className="text-muted-foreground">Blank {idx + 1}:</span>
+                            <span className={`px-2 py-1 rounded font-semibold ${
+                              isBlankCorrect 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-red-100 text-red-700'
+                            }`}>
+                              {userAns}
+                            </span>
+                            {!isBlankCorrect && (
+                              <>
+                                <span className="text-muted-foreground">→</span>
+                                <span className="px-2 py-1 rounded font-semibold bg-green-100 text-green-700">
+                                  {correctAns}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
+                  ) : (
+                    <>
+                      <p className="text-center">
+                        <span className="text-muted-foreground">Your answer: </span>
+                        <span className="font-semibold">{userAnswer}</span>
+                      </p>
+                      {!isCorrect && (
+                        <div className="text-center mt-2">
+                          <span className="text-muted-foreground">Correct answer: </span>
+                          <span className="font-semibold whitespace-pre-wrap">
+                            {currentCard.type === 'grammar-exercise' 
+                              ? currentCard.answer 
+                              : direction === 'forward' ? currentCard.translation : currentCard.word}
+                          </span>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
                 
