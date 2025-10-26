@@ -170,7 +170,7 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {categoryId === 'grammar' && deckType !== 'grammar-rules' && (
+            {categoryId === 'grammar' && deckType !== 'grammar-rules' && deckType !== 'grammar-exercises' && (
               <div className="space-y-2">
                 <Label>Card Type</Label>
                 <RadioGroup value={cardType} onValueChange={(value) => setCardType(value as 'practice' | 'grammar-rule')}>
