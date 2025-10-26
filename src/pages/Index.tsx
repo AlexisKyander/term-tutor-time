@@ -433,8 +433,15 @@ const Index = () => {
   };
 
   const studyDeck = (deckId: string) => {
-    setNavigation(prev => ({ ...prev, currentDeckId: deckId }));
-    setMode('direction-selector');
+    const deck = decks.find(d => d.id === deckId);
+    if (deck?.deckType === 'grammar-exercises') {
+      // Skip direction selector for grammar exercises
+      setNavigation(prev => ({ ...prev, currentDeckId: deckId, studyDirection: 'forward' }));
+      setMode('study');
+    } else {
+      setNavigation(prev => ({ ...prev, currentDeckId: deckId }));
+      setMode('direction-selector');
+    }
   };
 
   const previewDeck = (deckId: string) => {
