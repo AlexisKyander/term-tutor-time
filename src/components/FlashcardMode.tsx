@@ -67,8 +67,8 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   const currentCard = shuffledVocabulary[currentIndex];
   const progress = ((currentIndex + 1) / shuffledVocabulary.length) * 100;
 
-  const normalizeText = (text: string) => {
-    return text.toLowerCase().trim();
+  const normalizeText = (text: string | undefined) => {
+    return (text || '').toLowerCase().trim();
   };
 
   const getEditDistance = (str1: string, str2: string): number => {
