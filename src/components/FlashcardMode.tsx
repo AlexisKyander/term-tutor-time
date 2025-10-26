@@ -351,25 +351,38 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                 </p>
                 {currentCard.exerciseType === 'cloze-test' && currentCard.clozeText ? (
                   <div className="text-2xl font-bold whitespace-pre-wrap leading-relaxed">
-                    {currentCard.clozeText.split(/(\*+)/).map((part, index) => {
-                      if (part.match(/^\*+$/)) {
-                        const blankIndex = currentCard.clozeText!.substring(0, currentCard.clozeText!.indexOf(part)).match(/\*+/g)?.length || 0;
-                        return (
-                          <span key={index} className="inline-flex items-center mx-1">
-                            <span className="border-b-2 border-primary min-w-[100px] text-center px-2">
+                    {(() => {
+                      let blankCounter = -1;
+                      return currentCard.clozeText!.split(/(\*+)/).map((part, i) => {
+                        if (/^\*+$/.test(part)) {
+                          blankCounter++;
+                          const idx = blankCounter;
+                          return (
+                            <span key={i} className="inline-flex items-center mx-1 align-baseline">
                               {showResult ? (
-                                <span className={clozeAnswers[blankIndex] && normalizeText(clozeAnswers[blankIndex]) === normalizeText(currentCard.clozeAnswers?.[blankIndex] || '') ? 'text-green-600' : 'text-red-600'}>
-                                  {clozeAnswers[blankIndex] || '_____'}
+                                <span className={clozeAnswers[idx] && normalizeText(clozeAnswers[idx]) === normalizeText(currentCard.clozeAnswers?.[idx] || '') ? 'text-green-600' : 'text-red-600'}>
+                                  {clozeAnswers[idx] || '_____'}
                                 </span>
                               ) : (
-                                '_____'
+                                <Input
+                                  value={clozeAnswers[idx] || ''}
+                                  onChange={(e) => {
+                                    const newAnswers = [...clozeAnswers];
+                                    newAnswers[idx] = e.target.value;
+                                    setClozeAnswers(newAnswers);
+                                  }}
+                                  onKeyDown={handleKeyPress}
+                                  placeholder={`Blank ${idx + 1}`}
+                                  className="inline-block w-28 h-9 text-lg text-center px-2 py-1"
+                                  disabled={showResult}
+                                />
                               )}
                             </span>
-                          </span>
-                        );
-                      }
-                      return <span key={index}>{part}</span>;
-                    })}
+                          );
+                        }
+                        return <span key={i}>{part}</span>;
+                      });
+                    })()}
                   </div>
                 ) : (
                   <h2 className="text-2xl font-bold whitespace-pre-wrap">
@@ -391,29 +404,10 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
 
           <div className="space-y-6">
             {currentCard.exerciseType === 'cloze-test' ? (
-              <div className="space-y-4">
+              <div className="space-y-2">
                 <p className="text-sm text-muted-foreground uppercase tracking-wider">
-                  Fill in the blanks
+                  Fill in the blanks above
                 </p>
-                {clozeAnswers.map((answer, index) => (
-                  <div key={index} className="space-y-1">
-                    <label className="text-xs text-muted-foreground">
-                      Blank {index + 1}
-                    </label>
-                    <Input
-                      value={answer}
-                      onChange={(e) => {
-                        const newAnswers = [...clozeAnswers];
-                        newAnswers[index] = e.target.value;
-                        setClozeAnswers(newAnswers);
-                      }}
-                      onKeyPress={handleKeyPress}
-                      placeholder={`Answer for blank ${index + 1}`}
-                      className="text-center text-lg h-12"
-                      disabled={showResult}
-                    />
-                  </div>
-                ))}
               </div>
             ) : (
               <div className="space-y-4">
