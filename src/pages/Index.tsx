@@ -28,8 +28,11 @@ export interface VocabularyItem {
   title?: string;
   rule?: string;
   exerciseDescription?: string;
+  exerciseType?: 'regular' | 'cloze-test';
   question?: string;
   answer?: string;
+  clozeText?: string;
+  clozeAnswers?: string[];
   language: string;
   targetLanguage: string;
   deckId: string;

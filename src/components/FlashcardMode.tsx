@@ -19,6 +19,7 @@ interface FlashcardModeProps {
 export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics, direction }: FlashcardModeProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState("");
+  const [clozeAnswers, setClozeAnswers] = useState<string[]>([]);
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [shuffledVocabulary, setShuffledVocabulary] = useState<VocabularyItem[]>([]);
@@ -27,6 +28,13 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   const [repetitionCount, setRepetitionCount] = useState<Record<string, { incorrect: number, almostCorrect: number }>>({});
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Initialize cloze answers when card changes
+  useEffect(() => {
+    if (currentCard?.exerciseType === 'cloze-test' && currentCard.clozeAnswers) {
+      setClozeAnswers(Array(currentCard.clozeAnswers.length).fill(""));
+    }
+  }, [currentIndex]);
 
   useEffect(() => {
     // Create study deck - each word appears once at the start of each session
@@ -84,6 +92,47 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   };
 
   const checkAnswer = () => {
+    // For cloze tests, check all answers
+    if (currentCard.exerciseType === 'cloze-test') {
+      if (clozeAnswers.some(a => !a.trim())) return;
+      
+      const correctAnswers = currentCard.clozeAnswers || [];
+      let allCorrect = true;
+      let hasAlmostCorrect = false;
+      
+      for (let i = 0; i < correctAnswers.length; i++) {
+        const userAns = normalizeText(clozeAnswers[i]);
+        const correctAns = normalizeText(correctAnswers[i]);
+        
+        if (userAns !== correctAns) {
+          allCorrect = false;
+          // Check if almost correct
+          if (userAns.length > 2) {
+            const distance = getEditDistance(userAns, correctAns);
+            const maxLength = Math.max(userAns.length, correctAns.length);
+            if (distance <= 2 && (distance <= 2 || distance / maxLength <= 0.4)) {
+              hasAlmostCorrect = true;
+            }
+          }
+        }
+      }
+      
+      setIsCorrect(allCorrect);
+      setShowResult(true);
+      (window as any).isAlmostCorrect = !allCorrect && hasAlmostCorrect;
+      
+      const result = allCorrect ? 'correct' : hasAlmostCorrect ? 'almostCorrect' : 'incorrect';
+      onUpdateStatistics(currentCard.id, result);
+      
+      setScore(prev => ({
+        correct: prev.correct + (allCorrect ? 1 : 0),
+        total: prev.total + 1
+      }));
+      
+      (document.activeElement as HTMLElement)?.blur();
+      return;
+    }
+    
     if (!userAnswer.trim()) return;
     
     // For grammar exercises, check against the answer field
@@ -179,6 +228,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
     if (currentIndex < shuffledVocabulary.length - 1) {
       setCurrentIndex(prev => prev + 1);
       setUserAnswer("");
+      setClozeAnswers([]);
       setShowResult(false);
     } else {
       setSessionComplete(true);
@@ -197,6 +247,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
     setShuffledVocabulary(shuffled);
     setCurrentIndex(0);
     setUserAnswer("");
+    setClozeAnswers([]);
     setShowResult(false);
     setScore({ correct: 0, total: 0 });
     setSessionComplete(false);
@@ -298,9 +349,33 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                 <p className="text-sm text-muted-foreground uppercase tracking-wider">
                   Question
                 </p>
-                <h2 className="text-2xl font-bold whitespace-pre-wrap">
-                  {currentCard.question}
-                </h2>
+                {currentCard.exerciseType === 'cloze-test' && currentCard.clozeText ? (
+                  <div className="text-2xl font-bold whitespace-pre-wrap leading-relaxed">
+                    {currentCard.clozeText.split(/(\*+)/).map((part, index) => {
+                      if (part.match(/^\*+$/)) {
+                        const blankIndex = currentCard.clozeText!.substring(0, currentCard.clozeText!.indexOf(part)).match(/\*+/g)?.length || 0;
+                        return (
+                          <span key={index} className="inline-flex items-center mx-1">
+                            <span className="border-b-2 border-primary min-w-[100px] text-center px-2">
+                              {showResult ? (
+                                <span className={clozeAnswers[blankIndex] && normalizeText(clozeAnswers[blankIndex]) === normalizeText(currentCard.clozeAnswers?.[blankIndex] || '') ? 'text-green-600' : 'text-red-600'}>
+                                  {clozeAnswers[blankIndex] || '_____'}
+                                </span>
+                              ) : (
+                                '_____'
+                              )}
+                            </span>
+                          </span>
+                        );
+                      }
+                      return <span key={index}>{part}</span>;
+                    })}
+                  </div>
+                ) : (
+                  <h2 className="text-2xl font-bold whitespace-pre-wrap">
+                    {currentCard.question}
+                  </h2>
+                )}
               </>
             ) : (
               <>
@@ -315,22 +390,49 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
           </div>
 
           <div className="space-y-6">
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground uppercase tracking-wider">
-                {currentCard.type === 'grammar-exercise' 
-                  ? 'Your Answer' 
-                  : `Translate to ${direction === 'forward' ? currentCard.targetLanguage : currentCard.language}`}
-              </p>
-              <Input
-                ref={inputRef}
-                value={userAnswer}
-                onChange={(e) => setUserAnswer(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Type your answer..."
-                className="text-center text-lg h-12"
-                disabled={showResult}
-              />
-            </div>
+            {currentCard.exerciseType === 'cloze-test' ? (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground uppercase tracking-wider">
+                  Fill in the blanks
+                </p>
+                {clozeAnswers.map((answer, index) => (
+                  <div key={index} className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      Blank {index + 1}
+                    </label>
+                    <Input
+                      value={answer}
+                      onChange={(e) => {
+                        const newAnswers = [...clozeAnswers];
+                        newAnswers[index] = e.target.value;
+                        setClozeAnswers(newAnswers);
+                      }}
+                      onKeyPress={handleKeyPress}
+                      placeholder={`Answer for blank ${index + 1}`}
+                      className="text-center text-lg h-12"
+                      disabled={showResult}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground uppercase tracking-wider">
+                  {currentCard.type === 'grammar-exercise' 
+                    ? 'Your Answer' 
+                    : `Translate to ${direction === 'forward' ? currentCard.targetLanguage : currentCard.language}`}
+                </p>
+                <Input
+                  ref={inputRef}
+                  value={userAnswer}
+                  onChange={(e) => setUserAnswer(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type your answer..."
+                  className="text-center text-lg h-12"
+                  disabled={showResult}
+                />
+              </div>
+            )}
 
             {showResult ? (
               <div className="space-y-6">
@@ -364,14 +466,24 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                     <span className="font-semibold">{userAnswer}</span>
                   </p>
                   {!isCorrect && (
-                    <p className="text-center mt-2">
-                      <span className="text-muted-foreground">Correct answer: </span>
-                      <span className="font-semibold whitespace-pre-wrap">
-                        {currentCard.type === 'grammar-exercise' 
-                          ? currentCard.answer 
-                          : direction === 'forward' ? currentCard.translation : currentCard.word}
-                      </span>
-                    </p>
+                    <div className="text-center mt-2 space-y-1">
+                      <p className="text-muted-foreground">Correct answer{currentCard.exerciseType === 'cloze-test' ? 's' : ''}: </p>
+                      {currentCard.exerciseType === 'cloze-test' && currentCard.clozeAnswers ? (
+                        <div className="space-y-1">
+                          {currentCard.clozeAnswers.map((ans, idx) => (
+                            <p key={idx} className="font-semibold">
+                              Blank {idx + 1}: {ans}
+                            </p>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="font-semibold whitespace-pre-wrap">
+                          {currentCard.type === 'grammar-exercise' 
+                            ? currentCard.answer 
+                            : direction === 'forward' ? currentCard.translation : currentCard.word}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
                 
@@ -401,7 +513,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                 onClick={checkAnswer} 
                 size="lg" 
                 className="w-full max-w-48"
-                disabled={!userAnswer.trim()}
+                disabled={currentCard.exerciseType === 'cloze-test' ? clozeAnswers.some(a => !a.trim()) : !userAnswer.trim()}
               >
                 Check Answer
               </Button>

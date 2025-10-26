@@ -18,8 +18,11 @@ export interface VocabularyItem {
   title?: string;
   rule?: string;
   exerciseDescription?: string;
+  exerciseType?: 'regular' | 'cloze-test';
   question?: string;
   answer?: string;
+  clozeText?: string;
+  clozeAnswers?: string[];
   language: string;
   targetLanguage: string;
   deckId: string;
@@ -27,7 +30,7 @@ export interface VocabularyItem {
 }
 
 interface VocabularyFormProps {
-  onAdd: (item: { word: string; translation: string; comment: string; image?: string; type?: 'practice' | 'grammar-rule' | 'grammar-exercise'; title?: string; rule?: string; exerciseDescription?: string; question?: string; answer?: string; deckId: string }) => void;
+  onAdd: (item: { word: string; translation: string; comment: string; image?: string; type?: 'practice' | 'grammar-rule' | 'grammar-exercise'; title?: string; rule?: string; exerciseDescription?: string; exerciseType?: 'regular' | 'cloze-test'; question?: string; answer?: string; clozeText?: string; clozeAnswers?: string[]; deckId: string }) => void;
   onBack: () => void;
   deckName: string;
   deckId: string;
@@ -41,6 +44,7 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
     deckType === 'grammar-rules' ? 'grammar-rule' : 
     deckType === 'grammar-exercises' ? 'grammar-exercise' : 'practice'
   );
+  const [exerciseType, setExerciseType] = useState<'regular' | 'cloze-test'>('regular');
   const [word, setWord] = useState("");
   const [translation, setTranslation] = useState("");
   const [comment, setComment] = useState("");
@@ -50,7 +54,23 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
   const [exerciseDescription, setExerciseDescription] = useState(existingExerciseDescription || "");
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+  const [clozeText, setClozeText] = useState("");
+  const [clozeAnswers, setClozeAnswers] = useState<string[]>([""]);
   const { toast } = useToast();
+
+  // Count * markers in cloze text and update answer fields
+  const updateClozeAnswerFields = (text: string) => {
+    const markers = text.match(/\*+/g) || [];
+    const count = markers.length;
+    setClozeAnswers(prev => {
+      if (count > prev.length) {
+        return [...prev, ...Array(count - prev.length).fill("")];
+      } else if (count < prev.length) {
+        return prev.slice(0, count);
+      }
+      return prev;
+    });
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -97,33 +117,64 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
         description: "Grammar rule added successfully",
       });
     } else if (cardType === 'grammar-exercise') {
-      if (!exerciseDescription.trim() || !question.trim() || !answer.trim()) {
-        toast({
-          title: "Error",
-          description: "Please fill in exercise description, question, and answer",
-          variant: "destructive",
-        });
-        return;
-      }
+      if (exerciseType === 'cloze-test') {
+        if (!exerciseDescription.trim() || !clozeText.trim() || clozeAnswers.some(a => !a.trim())) {
+          toast({
+            title: "Error",
+            description: "Please fill in question instructions, cloze text, and all answer fields",
+            variant: "destructive",
+          });
+          return;
+        }
 
-      onAdd({
-        word: "",
-        translation: "",
-        comment: "",
-        type: 'grammar-exercise',
-        exerciseDescription: exerciseDescription.trim(),
-        question: question.trim(),
-        answer: answer.trim(),
-        deckId,
-      });
-      // Keep exercise description for next card, reset question and answer
-      setQuestion("");
-      setAnswer("");
-      
-      toast({
-        title: "Success!",
-        description: "Grammar exercise added successfully",
-      });
+        onAdd({
+          word: "",
+          translation: "",
+          comment: "",
+          type: 'grammar-exercise',
+          exerciseType: 'cloze-test',
+          exerciseDescription: exerciseDescription.trim(),
+          clozeText: clozeText.trim(),
+          clozeAnswers: clozeAnswers.map(a => a.trim()),
+          deckId,
+        });
+        // Keep exercise description and cloze text structure, reset answers
+        setClozeAnswers(clozeAnswers.map(() => ""));
+        
+        toast({
+          title: "Success!",
+          description: "Cloze test added successfully",
+        });
+      } else {
+        if (!exerciseDescription.trim() || !question.trim() || !answer.trim()) {
+          toast({
+            title: "Error",
+            description: "Please fill in exercise description, question, and answer",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        onAdd({
+          word: "",
+          translation: "",
+          comment: "",
+          type: 'grammar-exercise',
+          exerciseType: 'regular',
+          exerciseDescription: exerciseDescription.trim(),
+          question: question.trim(),
+          answer: answer.trim(),
+          deckId,
+        });
+        // Keep exercise description for next card, reset question and answer
+        setQuestion("");
+        setAnswer("");
+        
+        toast({
+          title: "Success!",
+          description: "Grammar exercise added successfully",
+        });
+      }
     } else {
       if (!word.trim() || !translation.trim()) {
         toast({
@@ -216,7 +267,21 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
             ) : cardType === 'grammar-exercise' ? (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="exerciseDescription">Exercise Description</Label>
+                  <Label>Exercise Type</Label>
+                  <RadioGroup value={exerciseType} onValueChange={(value) => setExerciseType(value as 'regular' | 'cloze-test')}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="regular" id="regular" />
+                      <Label htmlFor="regular" className="font-normal cursor-pointer">Regular Question</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="cloze-test" id="cloze-test" />
+                      <Label htmlFor="cloze-test" className="font-normal cursor-pointer">Cloze Test</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="exerciseDescription">Question Instructions</Label>
                   <Textarea
                     id="exerciseDescription"
                     placeholder="Describe the exercise (this will be prefilled for subsequent cards)"
@@ -230,28 +295,75 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
                   </p>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="question">Question</Label>
-                  <Textarea
-                    id="question"
-                    placeholder="Enter the question"
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    autoFocus={!!existingExerciseDescription}
-                    rows={2}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="answer">Answer</Label>
-                  <Textarea
-                    id="answer"
-                    placeholder="Enter the answer"
-                    value={answer}
-                    onChange={(e) => setAnswer(e.target.value)}
-                    rows={2}
-                  />
-                </div>
+                {exerciseType === 'cloze-test' ? (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="clozeText">Question Text</Label>
+                      <Textarea
+                        id="clozeText"
+                        placeholder="Enter the text with * for missing words (e.g., 'The cat * on the mat' or use ** and *** for multiple blanks)"
+                        value={clozeText}
+                        onChange={(e) => {
+                          setClozeText(e.target.value);
+                          updateClozeAnswerFields(e.target.value);
+                        }}
+                        autoFocus={!!existingExerciseDescription}
+                        rows={4}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Use * for the first blank, ** for the second, *** for the third, etc.
+                      </p>
+                    </div>
+                    
+                    {clozeAnswers.length > 0 && (
+                      <div className="space-y-2">
+                        <Label>Answers</Label>
+                        {clozeAnswers.map((answer, index) => (
+                          <div key={index} className="space-y-1">
+                            <Label htmlFor={`answer-${index}`} className="text-xs text-muted-foreground">
+                              Answer for blank {index + 1} ({Array(index + 1).fill('*').join('')})
+                            </Label>
+                            <Input
+                              id={`answer-${index}`}
+                              placeholder={`Enter answer ${index + 1}`}
+                              value={answer}
+                              onChange={(e) => {
+                                const newAnswers = [...clozeAnswers];
+                                newAnswers[index] = e.target.value;
+                                setClozeAnswers(newAnswers);
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="question">Question</Label>
+                      <Textarea
+                        id="question"
+                        placeholder="Enter the question"
+                        value={question}
+                        onChange={(e) => setQuestion(e.target.value)}
+                        autoFocus={!!existingExerciseDescription}
+                        rows={2}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="answer">Answer</Label>
+                      <Textarea
+                        id="answer"
+                        placeholder="Enter the answer"
+                        value={answer}
+                        onChange={(e) => setAnswer(e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+                  </>
+                )}
               </>
             ) : (
               <>
@@ -328,7 +440,7 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
             <div className="flex gap-2">
               <Button type="submit" className="flex-1">
                 <Plus className="w-4 h-4 mr-2" />
-                Add {cardType === 'grammar-rule' ? 'Grammar Rule' : cardType === 'grammar-exercise' ? 'Exercise Card' : 'Vocabulary'}
+                Add {cardType === 'grammar-rule' ? 'Grammar Rule' : cardType === 'grammar-exercise' ? (exerciseType === 'cloze-test' ? 'Cloze Test' : 'Exercise Card') : 'Vocabulary'}
               </Button>
               <Button type="button" variant="outline" onClick={onBack}>
                 Cancel
