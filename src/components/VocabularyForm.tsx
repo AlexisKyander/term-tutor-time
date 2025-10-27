@@ -254,13 +254,13 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
                   <Label htmlFor="rule">Grammar Rule</Label>
                   <Textarea
                     id="rule"
-                    placeholder="Enter the grammar rule (you can use markdown for tables)"
+                    placeholder="Enter the grammar rule (supports markdown: **bold**, *italic*, tables, etc.)"
                     value={rule}
                     onChange={(e) => setRule(e.target.value)}
                     className="min-h-[300px]"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Tip: You can format tables using markdown syntax
+                    Tip: Use markdown for formatting - **bold**, *italic*, and tables with | pipes |
                   </p>
                 </div>
               </>

@@ -789,6 +789,7 @@ const Index = () => {
           <GrammarRuleView 
             item={viewingItem}
             deckName={currentDeck.name}
+            onEdit={editVocabulary}
             onBack={() => setMode('vocabulary')}
           />
         );
