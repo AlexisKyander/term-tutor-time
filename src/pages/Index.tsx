@@ -712,6 +712,7 @@ const Index = () => {
               deckName={currentFolder.name}
               onBack={() => setMode(currentFolder.type === 'grammar-rules' ? 'folders' : 'decks')}
               onAddWord={() => setMode('add-word')}
+              onEdit={editVocabulary}
             />
           );
         }

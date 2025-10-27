@@ -2,88 +2,22 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Edit } from "lucide-react";
 import { VocabularyItem } from "@/pages/Index";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface GrammarRulesGridViewProps {
   items: VocabularyItem[];
   deckName: string;
   onBack: () => void;
   onAddWord: () => void;
+  onEdit: (id: string) => void;
 }
 
-export const GrammarRulesGridView = ({ items, deckName, onBack, onAddWord }: GrammarRulesGridViewProps) => {
+export const GrammarRulesGridView = ({ items, deckName, onBack, onAddWord, onEdit }: GrammarRulesGridViewProps) => {
   const [selectedItem, setSelectedItem] = useState<VocabularyItem | null>(null);
 
-  const renderRule = (rule: string) => {
-    const lines = rule.split('\n');
-    let inTable = false;
-    const elements: JSX.Element[] = [];
-    let tableRows: string[] = [];
-    
-    lines.forEach((line, index) => {
-      if (line.trim().includes('|')) {
-        if (!inTable) {
-          inTable = true;
-          tableRows = [];
-        }
-        tableRows.push(line);
-      } else {
-        if (inTable && tableRows.length > 0) {
-          elements.push(renderTable(tableRows, `table-${index}`));
-          tableRows = [];
-          inTable = false;
-        }
-        if (line.trim()) {
-          elements.push(<p key={`p-${index}`} className="mb-2">{line}</p>);
-        }
-      }
-    });
-    
-    if (inTable && tableRows.length > 0) {
-      elements.push(renderTable(tableRows, 'table-end'));
-    }
-    
-    return elements;
-  };
-  
-  const renderTable = (rows: string[], key: string) => {
-    const parsedRows = rows
-      .filter(row => !row.includes('---'))
-      .map(row => row.split('|').map(cell => cell.trim()).filter(cell => cell));
-    
-    if (parsedRows.length === 0) return null;
-    
-    const headers = parsedRows[0];
-    const dataRows = parsedRows.slice(1);
-    
-    return (
-      <div key={key} className="overflow-x-auto my-4">
-        <table className="w-full border-collapse border border-border">
-          <thead>
-            <tr className="bg-muted">
-              {headers.map((header, i) => (
-                <th key={i} className="border border-border px-4 py-2 text-left font-semibold">
-                  {header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {dataRows.map((row, i) => (
-              <tr key={i} className="hover:bg-muted/50">
-                {row.map((cell, j) => (
-                  <td key={j} className="border border-border px-4 py-2">
-                    {cell}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -130,8 +64,23 @@ export const GrammarRulesGridView = ({ items, deckName, onBack, onAddWord }: Gra
           <DialogHeader>
             <DialogTitle className="text-2xl">{selectedItem?.title}</DialogTitle>
           </DialogHeader>
-          <div className="prose prose-sm max-w-none dark:prose-invert mt-4">
-            {selectedItem?.rule && renderRule(selectedItem.rule)}
+          <div className="prose prose-sm max-w-none dark:prose-invert mt-4 prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-em:text-foreground">
+            {selectedItem?.rule && (
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {selectedItem.rule}
+              </ReactMarkdown>
+            )}
+          </div>
+          <div className="mt-6 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setSelectedItem(null)}>
+              Close
+            </Button>
+            {selectedItem && (
+              <Button onClick={() => { onEdit(selectedItem.id); setSelectedItem(null); }}>
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
