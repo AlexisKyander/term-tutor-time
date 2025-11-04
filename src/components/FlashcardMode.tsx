@@ -355,8 +355,8 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                   <div className="text-2xl font-bold whitespace-pre-wrap leading-relaxed">
                     {(() => {
                       let blankCounter = -1;
-                      return currentCard.clozeText!.split(/(\*+)/).map((part, i) => {
-                        if (/^\*+$/.test(part)) {
+                      return currentCard.clozeText!.split(/(\(\d+\))/).map((part, i) => {
+                        if (/^\(\d+\)$/.test(part)) {
                           blankCounter++;
                           const idx = blankCounter;
                           return (

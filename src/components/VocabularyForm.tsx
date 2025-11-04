@@ -58,9 +58,9 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
   const [clozeAnswers, setClozeAnswers] = useState<string[]>([""]);
   const { toast } = useToast();
 
-  // Count * markers in cloze text and update answer fields
+  // Count (1), (2), (3) markers in cloze text and update answer fields
   const updateClozeAnswerFields = (text: string) => {
-    const markers = text.match(/\*+/g) || [];
+    const markers = text.match(/\(\d+\)/g) || [];
     const count = markers.length;
     setClozeAnswers(prev => {
       if (count > prev.length) {
@@ -301,7 +301,7 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
                       <Label htmlFor="clozeText">Question Text</Label>
                       <Textarea
                         id="clozeText"
-                        placeholder="Enter the text with * for missing words (e.g., 'The cat * on the mat' or use ** and *** for multiple blanks)"
+                        placeholder="Enter text with (1), (2), (3) for blanks (e.g., 'The cat (1) on the mat')"
                         value={clozeText}
                         onChange={(e) => {
                           setClozeText(e.target.value);
