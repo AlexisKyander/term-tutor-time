@@ -311,7 +311,7 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
                         rows={4}
                       />
                       <p className="text-xs text-muted-foreground">
-                        Use * for the first blank, ** for the second, *** for the third, etc.
+                        Use (1) for the first blank, (2) for the second, (3) for the third, etc.
                       </p>
                     </div>
                     
@@ -321,7 +321,7 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
                         {clozeAnswers.map((answer, index) => (
                           <div key={index} className="space-y-1">
                             <Label htmlFor={`answer-${index}`} className="text-xs text-muted-foreground">
-                              Answer for blank {index + 1} ({Array(index + 1).fill('*').join('')})
+                              Answer for blank ({index + 1})
                             </Label>
                             <Input
                               id={`answer-${index}`}
