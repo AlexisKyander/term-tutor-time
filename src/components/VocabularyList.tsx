@@ -16,6 +16,12 @@ export interface VocabularyItem {
   type?: 'practice' | 'grammar-rule' | 'grammar-exercise';
   title?: string;
   rule?: string;
+  exerciseDescription?: string;
+  exerciseType?: 'regular' | 'cloze-test';
+  question?: string;
+  answer?: string;
+  clozeText?: string;
+  clozeAnswers?: string[];
   language: string;
   targetLanguage: string;
   deckId: string;
@@ -107,15 +113,18 @@ export const VocabularyList = ({ vocabulary, onDelete, onEdit, onView, onBack, d
                 <TableBody>
                   {vocabulary.map((item) => {
                     const isGrammarRule = item.type === 'grammar-rule';
+                    const isGrammarExercise = item.type === 'grammar-exercise';
+                    const isGrammarType = isGrammarRule || isGrammarExercise;
+                    
                     return (
                       <TableRow key={item.id}>
                         <TableCell>
-                          <Badge variant={isGrammarRule ? "secondary" : "outline"}>
-                            {isGrammarRule ? "Rule" : "Practice"}
+                          <Badge variant={isGrammarType ? "secondary" : "outline"}>
+                            {isGrammarRule ? "Rule" : isGrammarExercise ? "Exercise" : "Practice"}
                           </Badge>
                         </TableCell>
                         <TableCell className="font-medium">
-                          {isGrammarRule ? item.title : item.word}
+                          {isGrammarRule ? item.title : isGrammarExercise ? "Cloze Test" : item.word}
                         </TableCell>
                         <TableCell>
                           {isGrammarRule ? (
@@ -124,13 +133,19 @@ export const VocabularyList = ({ vocabulary, onDelete, onEdit, onView, onBack, d
                                 ? `${item.rule.substring(0, 50)}...` 
                                 : item.rule}
                             </span>
+                          ) : isGrammarExercise ? (
+                            <span className="text-muted-foreground italic">
+                              {item.clozeText && item.clozeText.length > 50 
+                                ? `${item.clozeText.substring(0, 50)}...` 
+                                : item.clozeText}
+                            </span>
                           ) : item.translation}
                         </TableCell>
                         <TableCell className="text-muted-foreground italic">
-                          {!isGrammarRule && (item.comment || "-")}
+                          {!isGrammarType && (item.comment || "-")}
                         </TableCell>
                         <TableCell>
-                          {!isGrammarRule && (
+                          {!isGrammarType && (
                             <div className="flex items-center space-x-3 text-sm">
                               <span className="text-green-600">✓ {item.statistics.correct}</span>
                               <span className="text-yellow-600">~ {item.statistics.almostCorrect}</span>
