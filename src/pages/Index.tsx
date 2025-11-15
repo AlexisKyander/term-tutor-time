@@ -710,7 +710,14 @@ const Index = () => {
             <GrammarRulesGridView 
               items={grammarRules}
               deckName={currentFolder.name}
-              onBack={() => setMode(currentFolder.type === 'grammar-rules' ? 'folders' : 'decks')}
+              onBack={() => {
+                if (currentFolder.type === 'grammar-rules' && currentFolder.parentFolderId) {
+                  setNavigation(prev => ({ ...prev, currentFolderId: currentFolder.parentFolderId, currentDeckId: undefined }));
+                  setMode('folders');
+                } else {
+                  setMode('decks');
+                }
+              }}
               onAddWord={() => setMode('add-word')}
               onEdit={editVocabulary}
             />
@@ -727,7 +734,14 @@ const Index = () => {
             onEdit={editVocabulary}
             onView={viewGrammarRule}
             onAddWord={() => setMode('add-word')}
-            onBack={() => setMode('decks')}
+            onBack={() => {
+              if ((currentFolder.type === 'grammar-exercises') && currentFolder.parentFolderId) {
+                setNavigation(prev => ({ ...prev, currentFolderId: currentFolder.parentFolderId, currentDeckId: undefined }));
+                setMode('folders');
+              } else {
+                setMode('decks');
+              }
+            }}
           />
         );
       }
