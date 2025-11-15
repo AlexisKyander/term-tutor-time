@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowLeft, Plus, Image as ImageIcon, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export interface VocabularyItem {
   id: string;
@@ -262,6 +264,14 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
                   <p className="text-xs text-muted-foreground">
                     Tip: Use markdown for formatting - **bold**, *italic*, and tables with | pipes |
                   </p>
+                  <div className="mt-4">
+                    <p className="text-xs text-muted-foreground mb-2">Live preview</p>
+                    <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-em:text-foreground">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {rule || "Type markdown above to see a preview."}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
                 </div>
               </>
             ) : cardType === 'grammar-exercise' ? (
