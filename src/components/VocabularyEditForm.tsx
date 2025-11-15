@@ -24,9 +24,21 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
   const [image, setImage] = useState<string>(item.image || "");
   const [title, setTitle] = useState(item.title || "");
   const [rule, setRule] = useState(item.rule || "");
+  const [clozeText, setClozeText] = useState(item.clozeText || "");
+  const [clozeAnswers, setClozeAnswers] = useState<string[]>(item.clozeAnswers || []);
+  const [exerciseDescription, setExerciseDescription] = useState(item.exerciseDescription || "");
   const { toast } = useToast();
   
   const isGrammarRule = item.type === 'grammar-rule';
+  const isGrammarExercise = item.type === 'grammar-exercise';
+  
+  // Extract answer count from cloze text
+  const extractAnswerCount = (text: string): number => {
+    const matches = text.match(/\(\d+\)/g);
+    return matches ? matches.length : 0;
+  };
+  
+  const answerCount = extractAnswerCount(clozeText);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -68,6 +80,41 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
         title: "Success!",
         description: "Grammar rule updated successfully",
       });
+    } else if (isGrammarExercise) {
+      if (!clozeText.trim()) {
+        toast({
+          title: "Error",
+          description: "Please fill in the question text",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const requiredAnswers = extractAnswerCount(clozeText);
+      const filledAnswers = clozeAnswers.filter(a => a.trim()).length;
+
+      if (filledAnswers < requiredAnswers) {
+        toast({
+          title: "Error",
+          description: `Please fill in all ${requiredAnswers} answers`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const updatedItem: VocabularyItem = {
+        ...item,
+        clozeText: clozeText.trim(),
+        clozeAnswers: clozeAnswers.slice(0, requiredAnswers).map(a => a.trim()),
+        exerciseDescription: exerciseDescription.trim(),
+      };
+
+      onUpdate(updatedItem);
+      
+      toast({
+        title: "Success!",
+        description: "Grammar exercise updated successfully",
+      });
     } else {
       if (!word.trim() || !translation.trim()) {
         toast({
@@ -104,9 +151,9 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
       
       <Card>
         <CardHeader>
-          <CardTitle>Edit {isGrammarRule ? 'Grammar Rule' : 'Vocabulary'}</CardTitle>
+          <CardTitle>Edit {isGrammarRule ? 'Grammar Rule' : isGrammarExercise ? 'Grammar Exercise' : 'Vocabulary'}</CardTitle>
           <CardDescription>
-            Update the {isGrammarRule ? 'grammar rule' : 'vocabulary'} in {deckName}
+            Update the {isGrammarRule ? 'grammar rule' : isGrammarExercise ? 'grammar exercise' : 'vocabulary'} in {deckName}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -145,6 +192,57 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
                     </div>
                   </div>
                 </div>
+              </>
+            ) : isGrammarExercise ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="exerciseDescription">Question Instructions</Label>
+                  <Textarea
+                    id="exerciseDescription"
+                    placeholder="Enter instructions for this exercise"
+                    value={exerciseDescription}
+                    onChange={(e) => setExerciseDescription(e.target.value)}
+                    className="min-h-[80px]"
+                    autoFocus
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    This description will be shown at the top of the card
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="clozeText">Question Text</Label>
+                  <Textarea
+                    id="clozeText"
+                    placeholder="Enter the question text with blanks marked as (1), (2), (3), etc."
+                    value={clozeText}
+                    onChange={(e) => setClozeText(e.target.value)}
+                    className="min-h-[120px]"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Use (1), (2), (3), etc. to mark where answers should go
+                  </p>
+                </div>
+
+                {answerCount > 0 && (
+                  <div className="space-y-2">
+                    <Label>Answers</Label>
+                    {Array.from({ length: answerCount }, (_, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <span className="text-sm font-medium w-8">({i + 1})</span>
+                        <Input
+                          placeholder={`Answer for blank ${i + 1}`}
+                          value={clozeAnswers[i] || ""}
+                          onChange={(e) => {
+                            const newAnswers = [...clozeAnswers];
+                            newAnswers[i] = e.target.value;
+                            setClozeAnswers(newAnswers);
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </>
             ) : (
               <>
@@ -221,7 +319,7 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
             <div className="flex gap-2">
               <Button type="submit" className="flex-1">
                 <Save className="w-4 h-4 mr-2" />
-                Update {isGrammarRule ? 'Grammar Rule' : 'Vocabulary'}
+                Update {isGrammarRule ? 'Grammar Rule' : isGrammarExercise ? 'Grammar Exercise' : 'Vocabulary'}
               </Button>
               <Button type="button" variant="outline" onClick={onBack}>
                 Cancel
