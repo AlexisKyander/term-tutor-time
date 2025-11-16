@@ -735,12 +735,8 @@ const Index = () => {
             onView={viewGrammarRule}
             onAddWord={() => setMode('add-word')}
             onBack={() => {
-              if ((currentFolder.type === 'grammar-exercises') && currentFolder.parentFolderId) {
-                setNavigation(prev => ({ ...prev, currentFolderId: currentFolder.parentFolderId, currentDeckId: undefined }));
-                setMode('folders');
-              } else {
-                setMode('decks');
-              }
+              // For grammar exercises and regular decks, go back to the deck list within the same folder
+              setMode('decks');
             }}
           />
         );
