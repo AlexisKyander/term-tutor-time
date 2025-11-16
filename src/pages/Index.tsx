@@ -652,7 +652,16 @@ const Index = () => {
             onEditDeck={editDeck}
             onStudyDeck={studyDeck}
             onPreviewDeck={previewDeck}
-            onBack={() => setMode('folders')}
+            onBack={() => {
+              // If this folder has a parent, go back to that parent folder
+              if (currentFolder.parentFolderId) {
+                setNavigation(prev => ({ ...prev, currentFolderId: currentFolder.parentFolderId, currentDeckId: undefined }));
+              } else {
+                // Otherwise, clear the folder selection
+                setNavigation(prev => ({ ...prev, currentFolderId: undefined, currentDeckId: undefined }));
+              }
+              setMode('folders');
+            }}
             onSettings={() => setMode('settings')}
           />
         );
