@@ -28,6 +28,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   const [repetitionCount, setRepetitionCount] = useState<Record<string, { incorrect: number, almostCorrect: number }>>({});
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
+  const clozeInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Initialize cloze answers when card changes
   useEffect(() => {
@@ -266,6 +267,21 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
     }
   };
 
+  const handleClozeKeyPress = (e: React.KeyboardEvent, index: number) => {
+    if (e.key === 'Enter') {
+      e.stopPropagation();
+      e.preventDefault();
+      
+      // If not the last input, move to next input
+      if (index < clozeAnswers.length - 1) {
+        clozeInputRefs.current[index + 1]?.focus();
+      } else {
+        // If it's the last input, check the answer
+        checkAnswer();
+      }
+    }
+  };
+
   if (!currentCard && !sessionComplete) {
     return (
       <div className="max-w-2xl mx-auto">
@@ -371,13 +387,14 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                                 </span>
                               ) : (
                                 <Input
+                                  ref={(el) => (clozeInputRefs.current[idx] = el)}
                                   value={clozeAnswers[idx] || ''}
                                   onChange={(e) => {
                                     const newAnswers = [...clozeAnswers];
                                     newAnswers[idx] = e.target.value;
                                     setClozeAnswers(newAnswers);
                                   }}
-                                  onKeyDown={handleKeyPress}
+                                  onKeyDown={(e) => handleClozeKeyPress(e, idx)}
                                   placeholder=""
                                   className="inline-block w-28 h-9 text-lg text-center px-2 py-1"
                                   disabled={showResult}
