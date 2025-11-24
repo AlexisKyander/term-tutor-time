@@ -7,6 +7,8 @@ import { ArrowLeft, RotateCcw, CheckCircle, XCircle } from "lucide-react";
 import { VocabularyItem } from "@/pages/Index";
 import { StudySettings } from "@/components/Settings";
 import { useToast } from "@/hooks/use-toast";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface FlashcardModeProps {
   vocabulary: VocabularyItem[];
@@ -355,9 +357,11 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
         <CardContent className="w-full text-center space-y-8">
           {currentCard.type === 'grammar-exercise' && currentCard.exerciseDescription && (
             <div className="p-4 bg-muted/30 rounded-lg mb-4">
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                {currentCard.exerciseDescription}
-              </p>
+              <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-em:text-foreground">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {currentCard.exerciseDescription}
+                </ReactMarkdown>
+              </div>
             </div>
           )}
           
@@ -368,7 +372,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                   Question
                 </p>
                 {currentCard.exerciseType === 'cloze-test' && currentCard.clozeText ? (
-                  <div className="text-2xl font-bold whitespace-pre-wrap leading-relaxed">
+                  <div className="text-2xl font-bold leading-relaxed">
                     {(() => {
                       let blankCounter = -1;
                       return currentCard.clozeText!.split(/(\(\d+\))/).map((part, i) => {
@@ -403,7 +407,15 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                             </span>
                           );
                         }
-                        return <span key={i}>{part}</span>;
+                        return (
+                          <span key={i} className="prose prose-lg max-w-none dark:prose-invert prose-strong:text-foreground prose-em:text-foreground inline">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
+                              p: ({node, ...props}) => <span {...props} />
+                            }}>
+                              {part}
+                            </ReactMarkdown>
+                          </span>
+                        );
                       });
                     })()}
                   </div>
