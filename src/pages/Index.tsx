@@ -743,6 +743,7 @@ const Index = () => {
             onEdit={editVocabulary}
             onView={viewGrammarRule}
             onAddWord={() => setMode('add-word')}
+            isGrammarExercises={currentDeck.deckType === 'grammar-exercises'}
             onBack={() => {
               // For grammar exercises and regular decks, go back to the deck list within the same folder
               setMode('decks');
