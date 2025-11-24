@@ -58,11 +58,13 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
   const [answer, setAnswer] = useState("");
   const [clozeText, setClozeText] = useState("");
   const [clozeAnswers, setClozeAnswers] = useState<string[]>([""]);
+  const [clozeInputMode, setClozeInputMode] = useState<'individual' | 'running-text'>('individual');
+  const [clozeRunningText, setClozeRunningText] = useState("");
   const { toast } = useToast();
 
   // Count (1), (2), (3) markers in cloze text and update answer fields
   const updateClozeAnswerFields = (text: string) => {
-    const markers = text.match(/\(\d+\)/g) || [];
+    const markers = text.match(/\\(\d+\)/g) || [];
     const count = markers.length;
     setClozeAnswers(prev => {
       if (count > prev.length) {
@@ -120,10 +122,19 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
       });
     } else if (cardType === 'grammar-exercise') {
       if (exerciseType === 'cloze-test') {
-        if (!exerciseDescription.trim() || !clozeText.trim() || clozeAnswers.some(a => !a.trim())) {
+        // Parse answers from running text if needed
+        let finalAnswers = clozeAnswers;
+        if (clozeInputMode === 'running-text') {
+          finalAnswers = clozeRunningText
+            .split(/\\(\d+\)/)
+            .filter(part => part.trim())
+            .map(answer => answer.trim());
+        }
+
+        if (!title.trim() || !exerciseDescription.trim() || !clozeText.trim() || finalAnswers.some(a => !a.trim())) {
           toast({
             title: "Error",
-            description: "Please fill in question instructions, cloze text, and all answer fields",
+            description: "Please fill in title, question instructions, cloze text, and all answer fields",
             variant: "destructive",
           });
           return;
@@ -135,23 +146,28 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
           comment: "",
           type: 'grammar-exercise',
           exerciseType: 'cloze-test',
+          title: title.trim(),
           exerciseDescription: exerciseDescription.trim(),
           clozeText: clozeText.trim(),
-          clozeAnswers: clozeAnswers.map(a => a.trim()),
+          clozeAnswers: finalAnswers,
           deckId,
         });
-        // Keep exercise description and cloze text structure, reset answers
-        setClozeAnswers(clozeAnswers.map(() => ""));
+        // Keep title, exercise description and cloze text structure, reset answers
+        if (clozeInputMode === 'individual') {
+          setClozeAnswers(clozeAnswers.map(() => ""));
+        } else {
+          setClozeRunningText("");
+        }
         
         toast({
           title: "Success!",
           description: "Cloze test added successfully",
         });
       } else {
-        if (!exerciseDescription.trim() || !question.trim() || !answer.trim()) {
+        if (!title.trim() || !exerciseDescription.trim() || !question.trim() || !answer.trim()) {
           toast({
             title: "Error",
-            description: "Please fill in exercise description, question, and answer",
+            description: "Please fill in title, exercise description, question, and answer",
             variant: "destructive",
           });
           return;
@@ -163,12 +179,13 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
           comment: "",
           type: 'grammar-exercise',
           exerciseType: 'regular',
+          title: title.trim(),
           exerciseDescription: exerciseDescription.trim(),
           question: question.trim(),
           answer: answer.trim(),
           deckId,
         });
-        // Keep exercise description for next card, reset question and answer
+        // Keep title and exercise description for next card, reset question and answer
         setQuestion("");
         setAnswer("");
         
@@ -277,6 +294,17 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
             ) : cardType === 'grammar-exercise' ? (
               <>
                 <div className="space-y-2">
+                  <Label htmlFor="exerciseTitle">Exercise Title</Label>
+                  <Input
+                    id="exerciseTitle"
+                    placeholder="Enter a title for this exercise"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label>Exercise Type</Label>
                   <RadioGroup value={exerciseType} onValueChange={(value) => setExerciseType(value as 'regular' | 'cloze-test')}>
                     <div className="flex items-center space-x-2">
@@ -297,7 +325,6 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
                     placeholder="Describe the exercise (this will be prefilled for subsequent cards)"
                     value={exerciseDescription}
                     onChange={(e) => setExerciseDescription(e.target.value)}
-                    autoFocus={!existingExerciseDescription}
                     rows={3}
                   />
                   <p className="text-xs text-muted-foreground">
@@ -317,7 +344,6 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
                           setClozeText(e.target.value);
                           updateClozeAnswerFields(e.target.value);
                         }}
-                        autoFocus={!!existingExerciseDescription}
                         rows={4}
                       />
                       <p className="text-xs text-muted-foreground">
@@ -326,6 +352,22 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
                     </div>
                     
                     {clozeAnswers.length > 0 && (
+                      <div className="space-y-2">
+                        <Label>Answer Input Method</Label>
+                        <RadioGroup value={clozeInputMode} onValueChange={(value) => setClozeInputMode(value as 'individual' | 'running-text')}>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="individual" id="individual" />
+                            <Label htmlFor="individual" className="font-normal cursor-pointer">Individual Boxes</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="running-text" id="running-text" />
+                            <Label htmlFor="running-text" className="font-normal cursor-pointer">Running Text</Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                    )}
+
+                    {clozeAnswers.length > 0 && clozeInputMode === 'individual' && (
                       <div className="space-y-2">
                         <Label>Answers</Label>
                         {clozeAnswers.map((answer, index) => (
@@ -347,6 +389,22 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
                         ))}
                       </div>
                     )}
+
+                    {clozeAnswers.length > 0 && clozeInputMode === 'running-text' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="clozeRunningText">Answers (Running Text)</Label>
+                        <Textarea
+                          id="clozeRunningText"
+                          placeholder="(1) first answer (2) second answer (3) third answer"
+                          value={clozeRunningText}
+                          onChange={(e) => setClozeRunningText(e.target.value)}
+                          rows={3}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Use (1), (2), (3) etc. to separate answers. Everything after a number and before the next number is an answer. Whitespace at the beginning and end will be trimmed.
+                        </p>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
@@ -357,7 +415,6 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
                         placeholder="Enter the question"
                         value={question}
                         onChange={(e) => setQuestion(e.target.value)}
-                        autoFocus={!!existingExerciseDescription}
                         rows={2}
                       />
                     </div>
@@ -450,10 +507,7 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
             <div className="flex gap-2">
               <Button type="submit" className="flex-1">
                 <Plus className="w-4 h-4 mr-2" />
-                Add {cardType === 'grammar-rule' ? 'Grammar Rule' : cardType === 'grammar-exercise' ? (exerciseType === 'cloze-test' ? 'Cloze Test' : 'Exercise Card') : 'Vocabulary'}
-              </Button>
-              <Button type="button" variant="outline" onClick={onBack}>
-                Cancel
+                Add Card
               </Button>
             </div>
           </form>

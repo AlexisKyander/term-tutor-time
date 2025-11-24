@@ -43,9 +43,10 @@ interface VocabularyListProps {
   onAddWord: () => void;
   fromLanguage: string;
   toLanguage: string;
+  isGrammarExercises?: boolean;
 }
 
-export const VocabularyList = ({ vocabulary, onDelete, onEdit, onView, onBack, deckName, onAddWord, fromLanguage, toLanguage }: VocabularyListProps) => {
+export const VocabularyList = ({ vocabulary, onDelete, onEdit, onView, onBack, deckName, onAddWord, fromLanguage, toLanguage, isGrammarExercises }: VocabularyListProps) => {
   const { toast } = useToast();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<VocabularyItem | null>(null);
@@ -76,7 +77,7 @@ export const VocabularyList = ({ vocabulary, onDelete, onEdit, onView, onBack, d
         </Button>
         <Button onClick={onAddWord}>
           <Plus className="w-4 h-4 mr-2" />
-          Add Word
+          {isGrammarExercises ? "Add Exercise" : "Add Word"}
         </Button>
       </div>
       
@@ -94,7 +95,7 @@ export const VocabularyList = ({ vocabulary, onDelete, onEdit, onView, onBack, d
               <p className="text-muted-foreground mb-4">No vocabulary added yet</p>
               <Button onClick={onAddWord}>
                 <Plus className="w-4 h-4 mr-2" />
-                Add First Word
+                {isGrammarExercises ? "Add First Exercise" : "Add First Word"}
               </Button>
             </div>
           ) : (
@@ -124,7 +125,7 @@ export const VocabularyList = ({ vocabulary, onDelete, onEdit, onView, onBack, d
                           </Badge>
                         </TableCell>
                         <TableCell className="font-medium">
-                          {isGrammarRule ? item.title : isGrammarExercise ? "Cloze Test" : item.word}
+                          {isGrammarRule ? item.title : isGrammarExercise ? (item.title || "Grammar Exercise") : item.word}
                         </TableCell>
                         <TableCell>
                           {isGrammarRule ? (
