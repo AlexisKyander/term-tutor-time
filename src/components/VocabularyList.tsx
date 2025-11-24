@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Trash2, BookOpen, Plus, Edit3, Eye } from "lucide-react";
+import { ArrowLeft, Trash2, BookOpen, Plus, Edit3, Eye, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export interface VocabularyItem {
@@ -38,6 +38,7 @@ interface VocabularyListProps {
   onDelete: (id: string) => void;
   onEdit: (id: string) => void;
   onView?: (id: string) => void;
+  onPractice?: (id: string) => void;
   onBack: () => void;
   deckName: string;
   onAddWord: () => void;
@@ -46,7 +47,7 @@ interface VocabularyListProps {
   isGrammarExercises?: boolean;
 }
 
-export const VocabularyList = ({ vocabulary, onDelete, onEdit, onView, onBack, deckName, onAddWord, fromLanguage, toLanguage, isGrammarExercises }: VocabularyListProps) => {
+export const VocabularyList = ({ vocabulary, onDelete, onEdit, onView, onPractice, onBack, deckName, onAddWord, fromLanguage, toLanguage, isGrammarExercises }: VocabularyListProps) => {
   const { toast } = useToast();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<VocabularyItem | null>(null);
@@ -156,6 +157,16 @@ export const VocabularyList = ({ vocabulary, onDelete, onEdit, onView, onBack, d
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end space-x-1">
+                            {isGrammarExercise && onPractice && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onPractice(item.id)}
+                                title="Practice this exercise"
+                              >
+                                <Play className="w-4 h-4" />
+                              </Button>
+                            )}
                             {isGrammarRule && onView && (
                               <Button
                                 variant="ghost"

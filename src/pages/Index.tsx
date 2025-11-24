@@ -54,6 +54,7 @@ interface NavigationState {
   editingDeckId?: string;
   editingVocabularyId?: string;
   viewingVocabularyId?: string;
+  practicingVocabularyId?: string;
   studyDirection?: 'forward' | 'reverse';
   previewDelay?: number;
   previewOrder?: 'original' | 'random';
@@ -439,12 +440,17 @@ const Index = () => {
     const deck = decks.find(d => d.id === deckId);
     if (deck?.deckType === 'grammar-exercises') {
       // Skip direction selector for grammar exercises
-      setNavigation(prev => ({ ...prev, currentDeckId: deckId, studyDirection: 'forward' }));
+      setNavigation(prev => ({ ...prev, currentDeckId: deckId, studyDirection: 'forward', practicingVocabularyId: undefined }));
       setMode('study');
     } else {
-      setNavigation(prev => ({ ...prev, currentDeckId: deckId }));
+      setNavigation(prev => ({ ...prev, currentDeckId: deckId, practicingVocabularyId: undefined }));
       setMode('direction-selector');
     }
+  };
+
+  const practiceExercise = (vocabularyId: string) => {
+    setNavigation(prev => ({ ...prev, practicingVocabularyId: vocabularyId, studyDirection: 'forward' }));
+    setMode('study');
   };
 
   const previewDeck = (deckId: string) => {
@@ -497,6 +503,11 @@ const Index = () => {
   };
 
   const getCurrentPracticeVocabulary = () => {
+    // If practicing a specific exercise, return only that one
+    if (navigation.practicingVocabularyId) {
+      const singleExercise = vocabulary.find(v => v.id === navigation.practicingVocabularyId);
+      return singleExercise ? [singleExercise] : [];
+    }
     return vocabulary.filter(v => v.deckId === navigation.currentDeckId && v.type !== 'grammar-rule');
   };
 
@@ -742,6 +753,7 @@ const Index = () => {
             onDelete={deleteVocabulary}
             onEdit={editVocabulary}
             onView={viewGrammarRule}
+            onPractice={currentDeck.deckType === 'grammar-exercises' ? practiceExercise : undefined}
             onAddWord={() => setMode('add-word')}
             isGrammarExercises={currentDeck.deckType === 'grammar-exercises'}
             onBack={() => {
@@ -860,7 +872,16 @@ const Index = () => {
             vocabulary={vocabItems}
             settings={settings}
             direction={navigation.studyDirection}
-            onBack={() => setMode('decks')}
+            onBack={() => {
+              // Clear practicing vocabulary ID when going back
+              setNavigation(prev => ({ ...prev, practicingVocabularyId: undefined }));
+              // If we were practicing a single exercise, go back to vocabulary list
+              if (navigation.practicingVocabularyId) {
+                setMode('vocabulary');
+              } else {
+                setMode('decks');
+              }
+            }}
             onUpdateStatistics={updateVocabularyStatistics}
           />
         );
