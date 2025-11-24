@@ -64,7 +64,7 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
 
   // Count (1), (2), (3) markers in cloze text and update answer fields
   const updateClozeAnswerFields = (text: string) => {
-    const markers = text.match(/\\(\d+\)/g) || [];
+    const markers = text.match(/\(\d+\)/g) || [];
     const count = markers.length;
     setClozeAnswers(prev => {
       if (count > prev.length) {
@@ -126,7 +126,7 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
         let finalAnswers = clozeAnswers;
         if (clozeInputMode === 'running-text') {
           finalAnswers = clozeRunningText
-            .split(/\\(\d+\)/)
+            .split(/\(\d+\)/)
             .filter(part => part.trim())
             .map(answer => answer.trim());
         }
