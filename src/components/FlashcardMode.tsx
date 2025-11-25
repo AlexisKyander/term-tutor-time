@@ -354,7 +354,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
       </div>
 
       <Card className="min-h-[300px] flex items-center justify-center">
-        <CardContent className="w-full text-center space-y-8">
+        <CardContent className="w-full text-center space-y-6">
           {currentCard.type === 'grammar-exercise' && currentCard.exerciseDescription && (
             <div className="p-4 bg-muted/30 rounded-lg mb-4">
               <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-em:text-foreground">
@@ -439,10 +439,8 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
 
           <div className="space-y-6">
             {currentCard.exerciseType === 'cloze-test' ? (
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground uppercase tracking-wider">
-                  Fill in the blanks above
-                </p>
+              <div className="mt-4">
+                {/* No additional text needed for cloze tests */}
               </div>
             ) : (
               <div className="space-y-4">
