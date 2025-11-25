@@ -32,7 +32,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const clozeInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
+  const checkAnswerButtonRef = useRef<HTMLButtonElement | null>(null);
   // Initialize cloze answers when card changes
   useEffect(() => {
     if (currentCard?.exerciseType === 'cloze-test' && currentCard.clozeAnswers) {
@@ -283,8 +283,8 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
           nextInput.focus();
         }
       } else {
-        // If it's the last input, check the answer
-        checkAnswer();
+        // If it's the last input, move focus to the "Check Answer" button
+        checkAnswerButtonRef.current?.focus();
       }
     }
   };
@@ -563,14 +563,15 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                 </Button>
               </div>
             ) : (
-              <Button 
-                onClick={checkAnswer} 
-                size="lg" 
-                className="w-full max-w-48"
-                disabled={currentCard.exerciseType === 'cloze-test' ? clozeAnswers.some(a => !a.trim()) : !userAnswer.trim()}
-              >
-                Check Answer
-              </Button>
+                <Button 
+                  ref={checkAnswerButtonRef}
+                  onClick={checkAnswer} 
+                  size="lg" 
+                  className="w-full max-w-48"
+                  disabled={currentCard.exerciseType === 'cloze-test' ? clozeAnswers.some(a => !a.trim()) : !userAnswer.trim()}
+                >
+                  Check Answer
+                </Button>
             )}
           </div>
         </CardContent>
