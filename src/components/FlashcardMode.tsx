@@ -9,6 +9,7 @@ import { StudySettings } from "@/components/Settings";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 
 interface FlashcardModeProps {
   vocabulary: VocabularyItem[];
@@ -277,10 +278,8 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
       // If not the last input, move to next input
       if (index < clozeAnswers.length - 1) {
         clozeInputRefs.current[index + 1]?.focus();
-      } else {
-        // If it's the last input, check the answer
-        checkAnswer();
       }
+      // If it's the last input, do nothing - user must click Check Answer button
     }
   };
 
@@ -358,7 +357,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
           {currentCard.type === 'grammar-exercise' && currentCard.exerciseDescription && (
             <div className="p-4 bg-muted/30 rounded-lg mb-4">
               <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-em:text-foreground">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
                   {currentCard.exerciseDescription}
                 </ReactMarkdown>
               </div>
@@ -409,7 +408,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                         }
                         return (
                           <span key={i} className="prose prose-lg max-w-none dark:prose-invert prose-strong:text-foreground prose-em:text-foreground inline">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
+                            <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} components={{
                               p: ({node, ...props}) => <span {...props} />
                             }}>
                               {part}
