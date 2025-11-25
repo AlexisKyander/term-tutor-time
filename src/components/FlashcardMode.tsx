@@ -37,6 +37,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   useEffect(() => {
     if (currentCard?.exerciseType === 'cloze-test' && currentCard.clozeAnswers) {
       setClozeAnswers(Array(currentCard.clozeAnswers.length).fill(""));
+      clozeInputRefs.current = Array(currentCard.clozeAnswers.length).fill(null);
     }
   }, [currentIndex]);
 
@@ -277,9 +278,14 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
       
       // If not the last input, move to next input
       if (index < clozeAnswers.length - 1) {
-        clozeInputRefs.current[index + 1]?.focus();
+        const nextInput = clozeInputRefs.current[index + 1];
+        if (nextInput) {
+          nextInput.focus();
+        }
+      } else {
+        // If it's the last input, check the answer
+        checkAnswer();
       }
-      // If it's the last input, do nothing - user must click Check Answer button
     }
   };
 
