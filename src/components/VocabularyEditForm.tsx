@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowLeft, Save, Image as ImageIcon, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from 'react-markdown';
@@ -27,6 +28,11 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
   const [clozeText, setClozeText] = useState(item.clozeText || "");
   const [clozeAnswers, setClozeAnswers] = useState<string[]>(item.clozeAnswers || []);
   const [exerciseDescription, setExerciseDescription] = useState(item.exerciseDescription || "");
+  const [exerciseType, setExerciseType] = useState<'regular' | 'cloze-test'>(item.exerciseType || 'cloze-test');
+  const [question, setQuestion] = useState(item.question || "");
+  const [answer, setAnswer] = useState(item.answer || "");
+  const [clozeInputMode, setClozeInputMode] = useState<'individual' | 'running-text'>('individual');
+  const [clozeRunningText, setClozeRunningText] = useState("");
   const { toast } = useToast();
   
   const isGrammarRule = item.type === 'grammar-rule';
@@ -39,6 +45,19 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
   };
   
   const answerCount = extractAnswerCount(clozeText);
+
+  // Update cloze answers array when cloze text changes
+  const updateClozeAnswerFields = (text: string) => {
+    const count = extractAnswerCount(text);
+    setClozeAnswers(prev => {
+      if (count > prev.length) {
+        return [...prev, ...Array(count - prev.length).fill("")];
+      } else if (count < prev.length) {
+        return prev.slice(0, count);
+      }
+      return prev;
+    });
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -81,40 +100,78 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
         description: "Grammar rule updated successfully",
       });
     } else if (isGrammarExercise) {
-      if (!clozeText.trim()) {
+      if (exerciseType === 'cloze-test') {
+        // Parse answers from running text if needed
+        let finalAnswers = clozeAnswers;
+        if (clozeInputMode === 'running-text') {
+          finalAnswers = clozeRunningText
+            .split(/\(\d+\)/)
+            .filter(part => part.trim())
+            .map(answer => answer.trim());
+        }
+
+        if (!title.trim() || !clozeText.trim()) {
+          toast({
+            title: "Error",
+            description: "Please fill in title and question text",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const requiredAnswers = extractAnswerCount(clozeText);
+        const filledAnswers = finalAnswers.filter(a => a.trim()).length;
+
+        if (filledAnswers < requiredAnswers) {
+          toast({
+            title: "Error",
+            description: `Please fill in all ${requiredAnswers} answers`,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const updatedItem: VocabularyItem = {
+          ...item,
+          exerciseType: 'cloze-test',
+          title: title.trim(),
+          clozeText: clozeText.trim(),
+          clozeAnswers: finalAnswers.slice(0, requiredAnswers).map(a => a.trim()),
+          exerciseDescription: exerciseDescription.trim(),
+        };
+
+        onUpdate(updatedItem);
+        
         toast({
-          title: "Error",
-          description: "Please fill in the question text",
-          variant: "destructive",
+          title: "Success!",
+          description: "Grammar exercise updated successfully",
         });
-        return;
-      }
+      } else {
+        if (!title.trim() || !question.trim() || !answer.trim()) {
+          toast({
+            title: "Error",
+            description: "Please fill in title, question, and answer",
+            variant: "destructive",
+          });
+          return;
+        }
 
-      const requiredAnswers = extractAnswerCount(clozeText);
-      const filledAnswers = clozeAnswers.filter(a => a.trim()).length;
+        const updatedItem: VocabularyItem = {
+          ...item,
+          exerciseType: 'regular',
+          title: title.trim(),
+          exerciseDescription: exerciseDescription.trim(),
+          question: question.trim(),
+          answer: answer.trim(),
+        };
 
-      if (filledAnswers < requiredAnswers) {
+        onUpdate(updatedItem);
+        
         toast({
-          title: "Error",
-          description: `Please fill in all ${requiredAnswers} answers`,
-          variant: "destructive",
+          title: "Success!",
+          description: "Grammar exercise updated successfully",
         });
-        return;
       }
-
-      const updatedItem: VocabularyItem = {
-        ...item,
-        clozeText: clozeText.trim(),
-        clozeAnswers: clozeAnswers.slice(0, requiredAnswers).map(a => a.trim()),
-        exerciseDescription: exerciseDescription.trim(),
-      };
-
-      onUpdate(updatedItem);
-      
-      toast({
-        title: "Success!",
-        description: "Grammar exercise updated successfully",
-      });
     } else {
       if (!word.trim() || !translation.trim()) {
         toast({
@@ -196,6 +253,31 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
             ) : isGrammarExercise ? (
               <>
                 <div className="space-y-2">
+                  <Label htmlFor="exerciseTitle">Exercise Title</Label>
+                  <Input
+                    id="exerciseTitle"
+                    placeholder="Enter a title for this exercise"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Exercise Type</Label>
+                  <RadioGroup value={exerciseType} onValueChange={(value) => setExerciseType(value as 'regular' | 'cloze-test')}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="regular" id="regular" />
+                      <Label htmlFor="regular" className="font-normal cursor-pointer">Regular Question</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="cloze-test" id="cloze-test" />
+                      <Label htmlFor="cloze-test" className="font-normal cursor-pointer">Cloze Test</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="exerciseDescription">Question Instructions</Label>
                   <Textarea
                     id="exerciseDescription"
@@ -203,45 +285,107 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
                     value={exerciseDescription}
                     onChange={(e) => setExerciseDescription(e.target.value)}
                     className="min-h-[80px]"
-                    autoFocus
                   />
                   <p className="text-xs text-muted-foreground">
                     This description will be shown at the top of the card
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="clozeText">Question Text</Label>
-                  <Textarea
-                    id="clozeText"
-                    placeholder="Enter the question text with blanks marked as (1), (2), (3), etc."
-                    value={clozeText}
-                    onChange={(e) => setClozeText(e.target.value)}
-                    className="min-h-[120px]"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Use (1), (2), (3), etc. to mark where answers should go
-                  </p>
-                </div>
+                {exerciseType === 'cloze-test' ? (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="clozeText">Question Text</Label>
+                      <Textarea
+                        id="clozeText"
+                        placeholder="Enter text with (1), (2), (3) for blanks"
+                        value={clozeText}
+                        onChange={(e) => {
+                          setClozeText(e.target.value);
+                          updateClozeAnswerFields(e.target.value);
+                        }}
+                        className="min-h-[120px]"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Use (1) for the first blank, (2) for the second, (3) for the third, etc.
+                      </p>
+                    </div>
 
-                {answerCount > 0 && (
-                  <div className="space-y-2">
-                    <Label>Answers</Label>
-                    {Array.from({ length: answerCount }, (_, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className="text-sm font-medium w-8">({i + 1})</span>
-                        <Input
-                          placeholder={`Answer for blank ${i + 1}`}
-                          value={clozeAnswers[i] || ""}
-                          onChange={(e) => {
-                            const newAnswers = [...clozeAnswers];
-                            newAnswers[i] = e.target.value;
-                            setClozeAnswers(newAnswers);
-                          }}
-                        />
+                    {answerCount > 0 && (
+                      <div className="space-y-2">
+                        <Label>Answer Input Method</Label>
+                        <RadioGroup value={clozeInputMode} onValueChange={(value) => setClozeInputMode(value as 'individual' | 'running-text')}>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="individual" id="individual" />
+                            <Label htmlFor="individual" className="font-normal cursor-pointer">Individual Boxes</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="running-text" id="running-text" />
+                            <Label htmlFor="running-text" className="font-normal cursor-pointer">Running Text</Label>
+                          </div>
+                        </RadioGroup>
                       </div>
-                    ))}
-                  </div>
+                    )}
+
+                    {answerCount > 0 && clozeInputMode === 'individual' && (
+                      <div className="space-y-2">
+                        <Label>Answers</Label>
+                        {Array.from({ length: answerCount }, (_, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <span className="text-sm font-medium w-8">({i + 1})</span>
+                            <Input
+                              placeholder={`Answer for blank ${i + 1}`}
+                              value={clozeAnswers[i] || ""}
+                              onChange={(e) => {
+                                const newAnswers = [...clozeAnswers];
+                                newAnswers[i] = e.target.value;
+                                setClozeAnswers(newAnswers);
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {answerCount > 0 && clozeInputMode === 'running-text' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="clozeRunningText">Answers (Running Text)</Label>
+                        <Textarea
+                          id="clozeRunningText"
+                          placeholder="(1) first answer (2) second answer (3) third answer"
+                          value={clozeRunningText}
+                          onChange={(e) => setClozeRunningText(e.target.value)}
+                          rows={3}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Use (1), (2), (3) etc. to separate answers. Whitespace at the beginning and end will be trimmed.
+                        </p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="question">Question</Label>
+                      <Textarea
+                        id="question"
+                        placeholder="Enter the question"
+                        value={question}
+                        onChange={(e) => setQuestion(e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="answer">Answer</Label>
+                      <Textarea
+                        id="answer"
+                        placeholder="Enter the answer"
+                        value={answer}
+                        onChange={(e) => setAnswer(e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+                  </>
                 )}
               </>
             ) : (
