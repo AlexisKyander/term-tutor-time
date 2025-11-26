@@ -32,7 +32,15 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
   const [question, setQuestion] = useState(item.question || "");
   const [answer, setAnswer] = useState(item.answer || "");
   const [clozeInputMode, setClozeInputMode] = useState<'individual' | 'running-text'>('individual');
-  const [clozeRunningText, setClozeRunningText] = useState("");
+  
+  // Initialize running text from existing answers
+  const initializeRunningText = (answers: string[]) => {
+    return answers.map((ans, idx) => `(${idx + 1}) ${ans}`).join(" ");
+  };
+  
+  const [clozeRunningText, setClozeRunningText] = useState(
+    item.clozeAnswers && item.clozeAnswers.length > 0 ? initializeRunningText(item.clozeAnswers) : ""
+  );
   const { toast } = useToast();
   
   const isGrammarRule = item.type === 'grammar-rule';
@@ -57,6 +65,23 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
       }
       return prev;
     });
+  };
+
+  // Handle mode switching - sync data between modes
+  const handleModeChange = (newMode: 'individual' | 'running-text') => {
+    if (newMode === 'running-text' && clozeInputMode === 'individual') {
+      // Converting from individual to running text - populate running text from individual answers
+      const runningText = clozeAnswers.map((ans, idx) => `(${idx + 1}) ${ans}`).join(" ");
+      setClozeRunningText(runningText);
+    } else if (newMode === 'individual' && clozeInputMode === 'running-text') {
+      // Converting from running text to individual - parse running text into individual answers
+      const parsedAnswers = clozeRunningText
+        .split(/\(\d+\)/)
+        .filter(part => part.trim())
+        .map(answer => answer.trim());
+      setClozeAnswers(parsedAnswers);
+    }
+    setClozeInputMode(newMode);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -313,7 +338,7 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
                     {answerCount > 0 && (
                       <div className="space-y-2">
                         <Label>Answer Input Method</Label>
-                        <RadioGroup value={clozeInputMode} onValueChange={(value) => setClozeInputMode(value as 'individual' | 'running-text')}>
+                        <RadioGroup value={clozeInputMode} onValueChange={handleModeChange}>
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value="individual" id="individual" />
                             <Label htmlFor="individual" className="font-normal cursor-pointer">Individual Boxes</Label>
