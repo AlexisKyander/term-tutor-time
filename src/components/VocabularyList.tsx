@@ -84,7 +84,7 @@ export const VocabularyList = ({ vocabulary, onDelete, onEdit, onView, onPractic
       
       <Card>
         <CardHeader>
-          <CardTitle>{deckName} Vocabulary</CardTitle>
+          <CardTitle>{deckName}</CardTitle>
           <CardDescription>
             {fromLanguage} → {toLanguage} ({vocabulary.length} words)
           </CardDescription>
@@ -105,8 +105,7 @@ export const VocabularyList = ({ vocabulary, onDelete, onEdit, onView, onPractic
                 <TableHeader>
                   <TableRow>
                     <TableHead>Type</TableHead>
-                    <TableHead>{fromLanguage}</TableHead>
-                    <TableHead>{toLanguage}</TableHead>
+                    <TableHead>Title</TableHead>
                     <TableHead>Comment</TableHead>
                     <TableHead>Statistics</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -122,26 +121,11 @@ export const VocabularyList = ({ vocabulary, onDelete, onEdit, onView, onPractic
                       <TableRow key={item.id}>
                         <TableCell>
                           <Badge variant={isGrammarType ? "secondary" : "outline"}>
-                            {isGrammarRule ? "Rule" : isGrammarExercise ? "Exercise" : "Practice"}
+                            {isGrammarRule ? "Rule" : isGrammarExercise ? (item.exerciseType === 'cloze-test' ? "Cloze Test" : "Regular Question") : "Practice"}
                           </Badge>
                         </TableCell>
                         <TableCell className="font-medium">
                           {isGrammarRule ? item.title : isGrammarExercise ? (item.title || "Grammar Exercise") : item.word}
-                        </TableCell>
-                        <TableCell>
-                          {isGrammarRule ? (
-                            <span className="text-muted-foreground italic">
-                              {item.rule && item.rule.length > 50 
-                                ? `${item.rule.substring(0, 50)}...` 
-                                : item.rule}
-                            </span>
-                          ) : isGrammarExercise ? (
-                            <span className="text-muted-foreground italic">
-                              {item.clozeText && item.clozeText.length > 50 
-                                ? `${item.clozeText.substring(0, 50)}...` 
-                                : item.clozeText}
-                            </span>
-                          ) : item.translation}
                         </TableCell>
                         <TableCell className="text-muted-foreground italic">
                           {!isGrammarType && (item.comment || "-")}
