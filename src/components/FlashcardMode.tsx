@@ -377,15 +377,17 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                   Question
                 </p>
                 {currentCard.exerciseType === 'cloze-test' && currentCard.clozeText ? (
-                  <div className="text-2xl font-bold leading-relaxed pr-8 relative">
+                  <div className="text-2xl font-bold leading-relaxed pr-8 relative whitespace-pre-wrap">
                     {(() => {
                       let blankCounter = -1;
-                      return currentCard.clozeText!.split(/(\(\d+\))/).map((part, i) => {
+                      const parts = currentCard.clozeText!.split(/(\(\d+\))/);
+                      
+                      return parts.map((part, i) => {
                         if (/^\(\d+\)$/.test(part)) {
                           blankCounter++;
                           const idx = blankCounter;
                           return (
-                            <span key={i} className="inline-flex items-center mx-1 align-baseline">
+                            <span key={i} className="inline-flex items-center mx-1 align-baseline relative">
                               <span className="absolute right-0 text-xs text-muted-foreground/60 select-none" style={{ marginRight: '-1.5rem' }}>
                                 {idx + 1}
                               </span>
@@ -415,13 +417,24 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                             </span>
                           );
                         }
+                        
+                        // For text parts, preserve line breaks
                         return (
-                          <span key={i} className="prose prose-lg max-w-none dark:prose-invert prose-strong:text-foreground prose-em:text-foreground whitespace-pre-wrap">
-                            <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} components={{
-                              p: ({node, ...props}) => <span {...props} />
-                            }}>
-                              {part}
-                            </ReactMarkdown>
+                          <span key={i} className="inline">
+                            {part.split('\n').map((line, lineIdx) => (
+                              <span key={lineIdx}>
+                                {line && (
+                                  <span className="prose prose-lg max-w-none dark:prose-invert prose-strong:text-foreground prose-em:text-foreground inline">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
+                                      p: ({node, ...props}) => <span {...props} />
+                                    }}>
+                                      {line}
+                                    </ReactMarkdown>
+                                  </span>
+                                )}
+                                {lineIdx < part.split('\n').length - 1 && <br />}
+                              </span>
+                            ))}
                           </span>
                         );
                       });
