@@ -414,7 +414,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                         }
                         return (
                           <span key={i} className="prose prose-lg max-w-none dark:prose-invert prose-strong:text-foreground prose-em:text-foreground inline">
-                            <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} components={{
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
                               p: ({node, ...props}) => <span {...props} />
                             }}>
                               {part}
