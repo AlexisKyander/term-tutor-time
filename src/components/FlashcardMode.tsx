@@ -416,11 +416,11 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                           );
                         }
                         return (
-                          <span key={i} className="prose prose-lg max-w-none dark:prose-invert prose-strong:text-foreground prose-em:text-foreground inline">
+                          <span key={i} className="prose prose-lg max-w-none dark:prose-invert prose-strong:text-foreground prose-em:text-foreground whitespace-pre-wrap">
                             <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} components={{
                               p: ({node, ...props}) => <span {...props} />
                             }}>
-                              {part.replace(/^\n+|\n+$/g, '')}
+                              {part}
                             </ReactMarkdown>
                           </span>
                         );
