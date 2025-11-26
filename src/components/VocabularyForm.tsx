@@ -25,6 +25,7 @@ export interface VocabularyItem {
   answer?: string;
   clozeText?: string;
   clozeAnswers?: string[];
+  clozeInputMode?: 'individual' | 'running-text';
   language: string;
   targetLanguage: string;
   deckId: string;
@@ -32,13 +33,13 @@ export interface VocabularyItem {
 }
 
 interface VocabularyFormProps {
-  onAdd: (item: { word: string; translation: string; comment: string; image?: string; type?: 'practice' | 'grammar-rule' | 'grammar-exercise'; title?: string; rule?: string; exerciseDescription?: string; exerciseType?: 'regular' | 'cloze-test'; question?: string; answer?: string; clozeText?: string; clozeAnswers?: string[]; deckId: string }) => void;
   onBack: () => void;
   deckName: string;
   deckId: string;
   categoryId?: string;
   deckType?: 'exercises' | 'grammar-rules' | 'grammar-exercises';
   existingExerciseDescription?: string;
+  onAdd: (item: { word: string; translation: string; comment: string; image?: string; type?: 'practice' | 'grammar-rule' | 'grammar-exercise'; title?: string; rule?: string; exerciseDescription?: string; exerciseType?: 'regular' | 'cloze-test'; question?: string; answer?: string; clozeText?: string; clozeAnswers?: string[]; clozeInputMode?: 'individual' | 'running-text'; deckId: string }) => void;
 }
 
 export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, deckType, existingExerciseDescription }: VocabularyFormProps) => {
@@ -150,6 +151,7 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
           exerciseDescription: exerciseDescription.trim(),
           clozeText: clozeText.trim(),
           clozeAnswers: finalAnswers,
+          clozeInputMode,
           deckId,
         });
         // Keep title, exercise description and cloze text structure, reset answers

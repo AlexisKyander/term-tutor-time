@@ -31,7 +31,7 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
   const [exerciseType, setExerciseType] = useState<'regular' | 'cloze-test'>(item.exerciseType || 'cloze-test');
   const [question, setQuestion] = useState(item.question || "");
   const [answer, setAnswer] = useState(item.answer || "");
-  const [clozeInputMode, setClozeInputMode] = useState<'individual' | 'running-text'>('individual');
+  const [clozeInputMode, setClozeInputMode] = useState<'individual' | 'running-text'>(item.clozeInputMode || 'running-text');
   
   // Initialize running text from existing answers
   const initializeRunningText = (answers: string[]) => {
@@ -163,6 +163,7 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
           clozeText: clozeText.trim(),
           clozeAnswers: finalAnswers.slice(0, requiredAnswers).map(a => a.trim()),
           exerciseDescription: exerciseDescription.trim(),
+          clozeInputMode,
         };
 
         onUpdate(updatedItem);
@@ -188,6 +189,7 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
           exerciseDescription: exerciseDescription.trim(),
           question: question.trim(),
           answer: answer.trim(),
+          clozeInputMode: undefined,
         };
 
         onUpdate(updatedItem);

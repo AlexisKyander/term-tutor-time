@@ -33,6 +33,7 @@ export interface VocabularyItem {
   answer?: string;
   clozeText?: string;
   clozeAnswers?: string[];
+  clozeInputMode?: 'individual' | 'running-text';
   language: string;
   targetLanguage: string;
   deckId: string;
