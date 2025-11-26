@@ -377,7 +377,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                   Question
                 </p>
                 {currentCard.exerciseType === 'cloze-test' && currentCard.clozeText ? (
-                  <div className="text-2xl font-bold leading-relaxed">
+                  <div className="text-2xl font-bold leading-relaxed pl-8 relative">
                     {(() => {
                       let blankCounter = -1;
                       return currentCard.clozeText!.split(/(\(\d+\))/).map((part, i) => {
@@ -385,8 +385,8 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                           blankCounter++;
                           const idx = blankCounter;
                           return (
-                            <span key={i} className="inline-flex items-center mx-1 align-baseline relative">
-                              <span className="absolute -left-6 text-xs text-muted-foreground/60 select-none">
+                            <span key={i} className="inline-flex items-center mx-1 align-baseline">
+                              <span className="absolute left-0 text-xs text-muted-foreground/60 select-none" style={{ marginLeft: '-2rem' }}>
                                 {idx + 1}
                               </span>
                               {showResult ? (
