@@ -385,7 +385,10 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                           blankCounter++;
                           const idx = blankCounter;
                           return (
-                            <span key={i} className="inline-flex items-center mx-1 align-baseline">
+                            <span key={i} className="inline-flex items-center mx-1 align-baseline relative">
+                              <span className="absolute -left-6 text-xs text-muted-foreground/60 select-none">
+                                {idx + 1}
+                              </span>
                               {showResult ? (
                                 <span className={`px-2 py-1 rounded ${
                                   normalizeText(clozeAnswers[idx]) === normalizeText(currentCard.clozeAnswers?.[idx] || '') 
