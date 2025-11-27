@@ -60,7 +60,6 @@ interface NavigationState {
   studyDirection?: 'forward' | 'reverse';
   previewDelay?: number;
   previewOrder?: 'original' | 'random';
-  shuffleQuestions?: boolean;
 }
 
 const STORAGE_KEY = 'vocabulary-app-data';
@@ -451,8 +450,8 @@ const Index = () => {
     }
   };
 
-  const studyAllExercises = (shuffle: boolean = false) => {
-    setNavigation(prev => ({ ...prev, practicingVocabularyId: undefined, shuffleQuestions: shuffle }));
+  const studyAllExercises = () => {
+    setNavigation(prev => ({ ...prev, practicingVocabularyId: undefined }));
     setMode('study');
   };
 
@@ -898,7 +897,6 @@ const Index = () => {
             vocabulary={vocabItems}
             settings={settings}
             direction={navigation.studyDirection}
-            shuffleQuestions={navigation.shuffleQuestions || false}
             onBack={() => {
               const wasPracticingSingle = navigation.practicingVocabularyId !== undefined;
               const deck = getCurrentDeck();
