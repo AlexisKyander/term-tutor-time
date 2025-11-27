@@ -903,12 +903,12 @@ const Index = () => {
               
               setNavigation(prev => ({ ...prev, practicingVocabularyId: undefined }));
               
-              if (wasPracticingSingle) {
-                // If practicing a single exercise, go back to vocabulary list
-                setMode('vocabulary');
-              } else if (deck?.deckType === 'grammar-exercises') {
-                // If practicing all exercises in a grammar deck, go back to exercise selector
+              if (deck?.deckType === 'grammar-exercises') {
+                // For grammar exercises, always go back to exercise selector
                 setMode('exercise-selector');
+              } else if (wasPracticingSingle) {
+                // If practicing a single exercise from other types, go back to vocabulary list
+                setMode('vocabulary');
               } else {
                 // For regular vocabulary decks, go back to deck list
                 setMode('decks');
