@@ -14,6 +14,7 @@ import SettingsView, { type StudySettings } from "@/components/Settings";
 import { PreviewMode } from "@/components/PreviewMode";
 import { DirectionSelector } from "@/components/DirectionSelector";
 import { PreviewOptions } from "@/components/PreviewOptions";
+import { ExerciseSelector } from "@/components/ExerciseSelector";
 import { useToast } from "@/hooks/use-toast";
 import { Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,7 @@ export interface VocabularyItem {
   };
 }
 
-type Mode = 'categories' | 'folders' | 'add-folder' | 'edit-folder' | 'decks' | 'add-deck' | 'edit-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'view-grammar-rule' | 'study' | 'preview' | 'settings' | 'direction-selector' | 'preview-options';
+type Mode = 'categories' | 'folders' | 'add-folder' | 'edit-folder' | 'decks' | 'add-deck' | 'edit-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'view-grammar-rule' | 'study' | 'preview' | 'settings' | 'direction-selector' | 'preview-options' | 'exercise-selector';
 
 interface NavigationState {
   currentCategoryId?: string;
@@ -440,13 +441,18 @@ const Index = () => {
   const studyDeck = (deckId: string) => {
     const deck = decks.find(d => d.id === deckId);
     if (deck?.deckType === 'grammar-exercises') {
-      // Skip direction selector for grammar exercises
+      // Show exercise selector for grammar exercises
       setNavigation(prev => ({ ...prev, currentDeckId: deckId, studyDirection: 'forward', practicingVocabularyId: undefined }));
-      setMode('study');
+      setMode('exercise-selector');
     } else {
       setNavigation(prev => ({ ...prev, currentDeckId: deckId, practicingVocabularyId: undefined }));
       setMode('direction-selector');
     }
+  };
+
+  const studyAllExercises = () => {
+    setNavigation(prev => ({ ...prev, practicingVocabularyId: undefined }));
+    setMode('study');
   };
 
   const practiceExercise = (vocabularyId: string) => {
@@ -859,6 +865,24 @@ const Index = () => {
         );
       }
 
+      case 'exercise-selector': {
+        const currentDeck = getCurrentDeck();
+        const exercises = getCurrentVocabulary().filter(v => v.type === 'grammar-exercise');
+        if (!currentDeck) {
+          setMode('decks');
+          return null;
+        }
+        return (
+          <ExerciseSelector
+            exercises={exercises}
+            deckName={currentDeck.name}
+            onSelectExercise={practiceExercise}
+            onStudyAll={studyAllExercises}
+            onBack={() => setMode('decks')}
+          />
+        );
+      }
+
       case 'study': {
         const currentDeck = getCurrentDeck();
         const vocabItems = getCurrentPracticeVocabulary();
@@ -874,12 +898,19 @@ const Index = () => {
             settings={settings}
             direction={navigation.studyDirection}
             onBack={() => {
-              // Clear practicing vocabulary ID when going back
+              const wasPracticingSingle = navigation.practicingVocabularyId !== undefined;
+              const deck = getCurrentDeck();
+              
               setNavigation(prev => ({ ...prev, practicingVocabularyId: undefined }));
-              // If we were practicing a single exercise, go back to vocabulary list
-              if (navigation.practicingVocabularyId) {
+              
+              if (wasPracticingSingle) {
+                // If practicing a single exercise, go back to vocabulary list
                 setMode('vocabulary');
+              } else if (deck?.deckType === 'grammar-exercises') {
+                // If practicing all exercises in a grammar deck, go back to exercise selector
+                setMode('exercise-selector');
               } else {
+                // For regular vocabulary decks, go back to deck list
                 setMode('decks');
               }
             }}
