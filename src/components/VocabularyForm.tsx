@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Plus, Image as ImageIcon, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from 'react-markdown';
@@ -26,6 +27,7 @@ export interface VocabularyItem {
   clozeText?: string;
   clozeAnswers?: string[];
   clozeInputMode?: 'individual' | 'running-text';
+  linkedGrammarRules?: string[];
   language: string;
   targetLanguage: string;
   deckId: string;
@@ -39,10 +41,11 @@ interface VocabularyFormProps {
   categoryId?: string;
   deckType?: 'exercises' | 'grammar-rules' | 'grammar-exercises';
   existingExerciseDescription?: string;
-  onAdd: (item: { word: string; translation: string; comment: string; image?: string; type?: 'practice' | 'grammar-rule' | 'grammar-exercise'; title?: string; rule?: string; exerciseDescription?: string; exerciseType?: 'regular' | 'cloze-test'; question?: string; answer?: string; clozeText?: string; clozeAnswers?: string[]; clozeInputMode?: 'individual' | 'running-text'; deckId: string }) => void;
+  availableGrammarRules?: VocabularyItem[];
+  onAdd: (item: { word: string; translation: string; comment: string; image?: string; type?: 'practice' | 'grammar-rule' | 'grammar-exercise'; title?: string; rule?: string; exerciseDescription?: string; exerciseType?: 'regular' | 'cloze-test'; question?: string; answer?: string; clozeText?: string; clozeAnswers?: string[]; clozeInputMode?: 'individual' | 'running-text'; linkedGrammarRules?: string[]; deckId: string }) => void;
 }
 
-export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, deckType, existingExerciseDescription }: VocabularyFormProps) => {
+export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, deckType, existingExerciseDescription, availableGrammarRules = [] }: VocabularyFormProps) => {
   const [cardType, setCardType] = useState<'practice' | 'grammar-rule' | 'grammar-exercise'>(
     deckType === 'grammar-rules' ? 'grammar-rule' : 
     deckType === 'grammar-exercises' ? 'grammar-exercise' : 'practice'
@@ -61,6 +64,7 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
   const [clozeAnswers, setClozeAnswers] = useState<string[]>([""]);
   const [clozeInputMode, setClozeInputMode] = useState<'individual' | 'running-text'>('individual');
   const [clozeRunningText, setClozeRunningText] = useState("");
+  const [linkedGrammarRules, setLinkedGrammarRules] = useState<string[]>([]);
   const { toast } = useToast();
 
   // Count (1), (2), (3) markers in cloze text and update answer fields
@@ -152,6 +156,7 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
           clozeText: clozeText.trim(),
           clozeAnswers: finalAnswers,
           clozeInputMode,
+          linkedGrammarRules: linkedGrammarRules.length > 0 ? linkedGrammarRules : undefined,
           deckId,
         });
         // Keep title, exercise description and cloze text structure, reset answers
@@ -185,6 +190,7 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
           exerciseDescription: exerciseDescription.trim(),
           question: question.trim(),
           answer: answer.trim(),
+          linkedGrammarRules: linkedGrammarRules.length > 0 ? linkedGrammarRules : undefined,
           deckId,
         });
         // Keep title and exercise description for next card, reset question and answer
@@ -333,6 +339,38 @@ export const VocabularyForm = ({ onAdd, onBack, deckName, deckId, categoryId, de
                     This description will be shown at the top of every card and will be prefilled for the next cards
                   </p>
                 </div>
+
+                {availableGrammarRules.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Link to Grammar Rules (optional)</Label>
+                    <div className="border rounded-md p-3 space-y-2 max-h-48 overflow-y-auto">
+                      {availableGrammarRules.map((rule) => (
+                        <div key={rule.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`rule-${rule.id}`}
+                            checked={linkedGrammarRules.includes(rule.id)}
+                            onCheckedChange={(checked) => {
+                              setLinkedGrammarRules(prev => 
+                                checked 
+                                  ? [...prev, rule.id]
+                                  : prev.filter(id => id !== rule.id)
+                              );
+                            }}
+                          />
+                          <Label 
+                            htmlFor={`rule-${rule.id}`} 
+                            className="font-normal cursor-pointer flex-1"
+                          >
+                            {rule.title}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Select grammar rules to display during practice for quick reference
+                    </p>
+                  </div>
+                )}
                 
                 {exerciseType === 'cloze-test' ? (
                   <>

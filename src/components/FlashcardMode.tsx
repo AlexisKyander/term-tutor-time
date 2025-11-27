@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, RotateCcw, CheckCircle, XCircle, Shuffle, Undo2 } from "lucide-react";
+import { ArrowLeft, RotateCcw, CheckCircle, XCircle, Shuffle, Undo2, BookOpen } from "lucide-react";
 import { VocabularyItem } from "@/pages/Index";
 import { StudySettings } from "@/components/Settings";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
@@ -17,9 +19,10 @@ interface FlashcardModeProps {
   onBack: () => void;
   onUpdateStatistics: (vocabularyId: string, result: 'correct' | 'almostCorrect' | 'incorrect') => void;
   direction: 'forward' | 'reverse';
+  availableGrammarRules?: VocabularyItem[];
 }
 
-export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics, direction }: FlashcardModeProps) => {
+export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics, direction, availableGrammarRules = [] }: FlashcardModeProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState("");
   const [clozeAnswers, setClozeAnswers] = useState<string[]>([]);
@@ -30,6 +33,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   const [sessionComplete, setSessionComplete] = useState(false);
   const [repetitionCount, setRepetitionCount] = useState<Record<string, { incorrect: number, almostCorrect: number }>>({});
   const [originalClozeState, setOriginalClozeState] = useState<{ text: string, answers: string[] } | null>(null);
+  const [viewingGrammarRule, setViewingGrammarRule] = useState<VocabularyItem | null>(null);
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const clozeInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -505,6 +509,26 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
             </div>
           )}
 
+          {currentCard.linkedGrammarRules && currentCard.linkedGrammarRules.length > 0 && (
+            <div className="flex flex-wrap gap-2 justify-center mb-4">
+              {currentCard.linkedGrammarRules.map((ruleId) => {
+                const rule = availableGrammarRules.find(r => r.id === ruleId);
+                if (!rule) return null;
+                return (
+                  <Badge
+                    key={rule.id}
+                    variant="outline"
+                    className="cursor-pointer hover:bg-accent transition-colors gap-1"
+                    onClick={() => setViewingGrammarRule(rule)}
+                  >
+                    <BookOpen className="w-3 h-3" />
+                    {rule.title}
+                  </Badge>
+                );
+              })}
+            </div>
+          )}
+
           {currentCard.exerciseType === 'cloze-test' && !showResult && (
             <div className="flex justify-end gap-2 mb-2">
               <Button
@@ -752,6 +776,19 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
           </div>
         </CardContent>
       </Card>
+      
+      <Dialog open={viewingGrammarRule !== null} onOpenChange={(open) => !open && setViewingGrammarRule(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{viewingGrammarRule?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-em:text-foreground">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {viewingGrammarRule?.rule || ""}
+            </ReactMarkdown>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

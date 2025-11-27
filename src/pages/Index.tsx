@@ -35,6 +35,7 @@ export interface VocabularyItem {
   clozeText?: string;
   clozeAnswers?: string[];
   clozeInputMode?: 'individual' | 'running-text';
+  linkedGrammarRules?: string[];
   language: string;
   targetLanguage: string;
   deckId: string;
@@ -781,10 +782,28 @@ const Index = () => {
         
         // For grammar exercises, get existing exercise description if any
         let existingExerciseDescription: string | undefined;
+        let availableGrammarRules: VocabularyItem[] = [];
+        
         if (currentDeck.deckType === 'grammar-exercises') {
           const existingCards = getCurrentVocabulary().filter(v => v.type === 'grammar-exercise');
           if (existingCards.length > 0 && existingCards[0].exerciseDescription) {
             existingExerciseDescription = existingCards[0].exerciseDescription;
+          }
+          
+          // Get grammar rules from the same parent folder
+          if (currentFolder.parentFolderId) {
+            const grammarRulesFolder = folders.find(f => 
+              f.parentFolderId === currentFolder.parentFolderId && 
+              f.type === 'grammar-rules'
+            );
+            if (grammarRulesFolder) {
+              const grammarRulesDeck = decks.find(d => d.folderId === grammarRulesFolder.id);
+              if (grammarRulesDeck) {
+                availableGrammarRules = vocabulary.filter(v => 
+                  v.deckId === grammarRulesDeck.id && v.type === 'grammar-rule'
+                );
+              }
+            }
           }
         }
         
@@ -795,6 +814,7 @@ const Index = () => {
             categoryId={currentFolder.categoryId}
             deckType={currentDeck.deckType}
             existingExerciseDescription={existingExerciseDescription}
+            availableGrammarRules={availableGrammarRules}
             onAdd={addVocabulary}
             onBack={() => setMode('vocabulary')}
           />
@@ -802,16 +822,37 @@ const Index = () => {
       }
 
       case 'edit-word': {
+        const currentFolder = getCurrentFolder();
         const currentDeck = getCurrentDeck();
         const editingItem = vocabulary.find(v => v.id === navigation.editingVocabularyId);
         if (!currentDeck || !editingItem) {
           setMode('vocabulary');
           return null;
         }
+        
+        let availableGrammarRules: VocabularyItem[] = [];
+        
+        if (editingItem.type === 'grammar-exercise' && currentFolder?.parentFolderId) {
+          // Get grammar rules from the same parent folder
+          const grammarRulesFolder = folders.find(f => 
+            f.parentFolderId === currentFolder.parentFolderId && 
+            f.type === 'grammar-rules'
+          );
+          if (grammarRulesFolder) {
+            const grammarRulesDeck = decks.find(d => d.folderId === grammarRulesFolder.id);
+            if (grammarRulesDeck) {
+              availableGrammarRules = vocabulary.filter(v => 
+                v.deckId === grammarRulesDeck.id && v.type === 'grammar-rule'
+              );
+            }
+          }
+        }
+        
         return (
           <VocabularyEditForm 
             item={editingItem}
             deckName={currentDeck.name}
+            availableGrammarRules={availableGrammarRules}
             onUpdate={updateVocabulary}
             onBack={() => setMode('vocabulary')}
           />
@@ -885,6 +926,7 @@ const Index = () => {
 
       case 'study': {
         const currentDeck = getCurrentDeck();
+        const currentFolder = getCurrentFolder();
         const vocabItems = getCurrentPracticeVocabulary();
         
         if (!currentDeck || !navigation.studyDirection) {
@@ -892,11 +934,29 @@ const Index = () => {
           return null;
         }
         
+        // Get available grammar rules for exercises
+        let availableGrammarRules: VocabularyItem[] = [];
+        if (currentDeck.deckType === 'grammar-exercises' && currentFolder?.parentFolderId) {
+          const grammarRulesFolder = folders.find(f => 
+            f.parentFolderId === currentFolder.parentFolderId && 
+            f.type === 'grammar-rules'
+          );
+          if (grammarRulesFolder) {
+            const grammarRulesDeck = decks.find(d => d.folderId === grammarRulesFolder.id);
+            if (grammarRulesDeck) {
+              availableGrammarRules = vocabulary.filter(v => 
+                v.deckId === grammarRulesDeck.id && v.type === 'grammar-rule'
+              );
+            }
+          }
+        }
+        
         return (
           <FlashcardMode 
             vocabulary={vocabItems}
             settings={settings}
             direction={navigation.studyDirection}
+            availableGrammarRules={availableGrammarRules}
             onBack={() => {
               const wasPracticingSingle = navigation.practicingVocabularyId !== undefined;
               const deck = getCurrentDeck();
