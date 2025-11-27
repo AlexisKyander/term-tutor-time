@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Save, Image as ImageIcon, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from 'react-markdown';
@@ -16,9 +17,10 @@ interface VocabularyEditFormProps {
   onUpdate: (item: VocabularyItem) => void;
   onBack: () => void;
   deckName: string;
+  availableGrammarRules?: VocabularyItem[];
 }
 
-export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: VocabularyEditFormProps) => {
+export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName, availableGrammarRules = [] }: VocabularyEditFormProps) => {
   const [word, setWord] = useState(item.word);
   const [translation, setTranslation] = useState(item.translation);
   const [comment, setComment] = useState(item.comment);
@@ -41,6 +43,7 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
   const [clozeRunningText, setClozeRunningText] = useState(
     item.clozeAnswers && item.clozeAnswers.length > 0 ? initializeRunningText(item.clozeAnswers) : ""
   );
+  const [linkedGrammarRules, setLinkedGrammarRules] = useState<string[]>(item.linkedGrammarRules || []);
   const { toast } = useToast();
   
   const isGrammarRule = item.type === 'grammar-rule';
@@ -164,6 +167,7 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
           clozeAnswers: finalAnswers.slice(0, requiredAnswers).map(a => a.trim()),
           exerciseDescription: exerciseDescription.trim(),
           clozeInputMode,
+          linkedGrammarRules: linkedGrammarRules.length > 0 ? linkedGrammarRules : undefined,
         };
 
         onUpdate(updatedItem);
@@ -189,6 +193,7 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
           exerciseDescription: exerciseDescription.trim(),
           question: question.trim(),
           answer: answer.trim(),
+          linkedGrammarRules: linkedGrammarRules.length > 0 ? linkedGrammarRules : undefined,
           clozeInputMode: undefined,
         };
 
@@ -317,6 +322,38 @@ export const VocabularyEditForm = ({ item, onUpdate, onBack, deckName }: Vocabul
                     This description will be shown at the top of the card
                   </p>
                 </div>
+
+                {availableGrammarRules.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Link to Grammar Rules (optional)</Label>
+                    <div className="border rounded-md p-3 space-y-2 max-h-48 overflow-y-auto">
+                      {availableGrammarRules.map((rule) => (
+                        <div key={rule.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`rule-${rule.id}`}
+                            checked={linkedGrammarRules.includes(rule.id)}
+                            onCheckedChange={(checked) => {
+                              setLinkedGrammarRules(prev => 
+                                checked 
+                                  ? [...prev, rule.id]
+                                  : prev.filter(id => id !== rule.id)
+                              );
+                            }}
+                          />
+                          <Label 
+                            htmlFor={`rule-${rule.id}`} 
+                            className="font-normal cursor-pointer flex-1"
+                          >
+                            {rule.title}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Select grammar rules to display during practice for quick reference
+                    </p>
+                  </div>
+                )}
 
                 {exerciseType === 'cloze-test' ? (
                   <>
