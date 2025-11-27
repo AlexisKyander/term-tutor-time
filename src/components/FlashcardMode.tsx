@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, RotateCcw, CheckCircle, XCircle, Shuffle } from "lucide-react";
+import { ArrowLeft, RotateCcw, CheckCircle, XCircle, Shuffle, Undo2 } from "lucide-react";
 import { VocabularyItem } from "@/pages/Index";
 import { StudySettings } from "@/components/Settings";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +29,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   const [score, setScore] = useState({ correct: 0, total: 0 });
   const [sessionComplete, setSessionComplete] = useState(false);
   const [repetitionCount, setRepetitionCount] = useState<Record<string, { incorrect: number, almostCorrect: number }>>({});
+  const [originalClozeState, setOriginalClozeState] = useState<{ text: string, answers: string[] } | null>(null);
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const clozeInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -292,6 +293,14 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   const shuffleQuestions = () => {
     if (!currentCard.clozeText || !currentCard.clozeAnswers) return;
 
+    // Save original state if not already saved
+    if (!originalClozeState) {
+      setOriginalClozeState({
+        text: currentCard.clozeText,
+        answers: [...currentCard.clozeAnswers]
+      });
+    }
+
     // Parse the cloze text to identify question boundaries
     const parts = currentCard.clozeText.split(/(\(\d+\))/);
     const questions: Array<{ text: string[]; answerIndices: number[] }> = [];
@@ -386,6 +395,35 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
     });
   };
 
+  const resetQuestionOrder = () => {
+    if (!originalClozeState) return;
+
+    // Restore original state
+    const updatedCard = {
+      ...currentCard,
+      clozeText: originalClozeState.text,
+      clozeAnswers: originalClozeState.answers
+    };
+
+    // Update the shuffled vocabulary array
+    setShuffledVocabulary(prev => {
+      const newVocabulary = [...prev];
+      newVocabulary[currentIndex] = updatedCard;
+      return newVocabulary;
+    });
+
+    // Reset the cloze answers for the user
+    setClozeAnswers(Array(originalClozeState.answers.length).fill(""));
+    
+    // Clear the saved original state
+    setOriginalClozeState(null);
+    
+    toast({
+      title: "Order restored",
+      description: "Questions are back to their original order",
+    });
+  };
+
   if (!currentCard && !sessionComplete) {
     return (
       <div className="max-w-2xl mx-auto">
@@ -468,7 +506,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
           )}
 
           {currentCard.exerciseType === 'cloze-test' && !showResult && (
-            <div className="flex justify-end mb-2">
+            <div className="flex justify-end gap-2 mb-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -478,6 +516,17 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                 <Shuffle className="w-4 h-4" />
                 Shuffle Questions
               </Button>
+              {originalClozeState && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={resetQuestionOrder}
+                  className="gap-2"
+                >
+                  <Undo2 className="w-4 h-4" />
+                  Reset Order
+                </Button>
+              )}
             </div>
           )}
           
