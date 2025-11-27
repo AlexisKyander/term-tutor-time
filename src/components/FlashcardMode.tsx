@@ -17,9 +17,10 @@ interface FlashcardModeProps {
   onBack: () => void;
   onUpdateStatistics: (vocabularyId: string, result: 'correct' | 'almostCorrect' | 'incorrect') => void;
   direction: 'forward' | 'reverse';
+  shuffleQuestions?: boolean;
 }
 
-export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics, direction }: FlashcardModeProps) => {
+export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics, direction, shuffleQuestions = false }: FlashcardModeProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState("");
   const [clozeAnswers, setClozeAnswers] = useState<string[]>([]);
@@ -43,7 +44,17 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
 
   useEffect(() => {
     // Create study deck - each word appears once at the start of each session
-    const studyDeck: VocabularyItem[] = [...vocabulary];
+    let studyDeck: VocabularyItem[] = [...vocabulary];
+    
+    // If shuffling questions for cloze tests, shuffle the questions within each item
+    if (shuffleQuestions) {
+      studyDeck = studyDeck.map(item => {
+        if (item.exerciseType === 'cloze-test' && item.clozeText && item.clozeAnswers) {
+          return shuffleClozeQuestions(item);
+        }
+        return item;
+      });
+    }
     
     // Shuffle the study deck
     const shuffled = studyDeck.sort(() => Math.random() - 0.5);
@@ -101,6 +112,76 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
     }
 
     return matrix[str2.length][str1.length];
+  };
+
+  const shuffleClozeQuestions = (item: VocabularyItem): VocabularyItem => {
+    if (!item.clozeText || !item.clozeAnswers) return item;
+    
+    // Parse the cloze text to identify questions
+    const questions: { text: string; blanks: string[] }[] = [];
+    let currentQuestion = { text: '', blanks: [] as string[] };
+    
+    const parts = item.clozeText.split(/(\(\d+\))/);
+    let blankIndex = 0;
+    
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      
+      if (/^\(\d+\)$/.test(part)) {
+        // This is a blank placeholder
+        currentQuestion.text += part;
+        currentQuestion.blanks.push(item.clozeAnswers[blankIndex]);
+        blankIndex++;
+        
+        // Check if next part starts a new question
+        const nextPart = parts[i + 1] || '';
+        const startsWithCapital = /^[A-ZÅÄÖ]/.test(nextPart.trimStart());
+        const startsWithNewline = /^\n/.test(nextPart);
+        
+        if ((startsWithCapital || startsWithNewline) && nextPart.trim()) {
+          // New question detected
+          questions.push({ ...currentQuestion });
+          currentQuestion = { text: '', blanks: [] };
+        }
+      } else {
+        currentQuestion.text += part;
+      }
+    }
+    
+    // Add the last question
+    if (currentQuestion.text.trim() || currentQuestion.blanks.length > 0) {
+      questions.push(currentQuestion);
+    }
+    
+    // Shuffle the questions
+    const shuffled = [...questions].sort(() => Math.random() - 0.5);
+    
+    // Reconstruct the cloze text and answers with renumbered blanks
+    let newClozeText = '';
+    const newAnswers: string[] = [];
+    let newBlankNumber = 1;
+    
+    shuffled.forEach((question, qIndex) => {
+      let questionText = question.text;
+      let blankCount = 0;
+      
+      // Replace old blank numbers with new sequential numbers
+      questionText = questionText.replace(/\(\d+\)/g, () => {
+        const newPlaceholder = `(${newBlankNumber})`;
+        newAnswers.push(question.blanks[blankCount]);
+        blankCount++;
+        newBlankNumber++;
+        return newPlaceholder;
+      });
+      
+      newClozeText += questionText;
+    });
+    
+    return {
+      ...item,
+      clozeText: newClozeText,
+      clozeAnswers: newAnswers
+    };
   };
 
   const checkAnswer = () => {
