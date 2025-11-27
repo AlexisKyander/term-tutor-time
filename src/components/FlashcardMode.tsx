@@ -337,9 +337,9 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
     // Reconstruct the text with renumbered blanks
     let newBlankCounter = 1;
     const newAnswers: string[] = [];
-    const newText = shuffledQuestions.map(question => {
+    const newText = shuffledQuestions.map((question, qIndex) => {
       let blankIndexInQuestion = 0;
-      return question.text.map(part => {
+      let questionText = question.text.map(part => {
         if (/^\(\d+\)$/.test(part)) {
           // This is a blank - renumber it and get the corresponding answer
           const originalIndex = question.answerIndices[blankIndexInQuestion];
@@ -349,6 +349,18 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
         }
         return part;
       }).join('');
+
+      // First question: trim leading newlines
+      if (qIndex === 0) {
+        questionText = questionText.replace(/^\n+/, '');
+      } else {
+        // Subsequent questions: ensure they start with a newline
+        if (!questionText.startsWith('\n')) {
+          questionText = '\n' + questionText;
+        }
+      }
+
+      return questionText;
     }).join('');
 
     // Update the current card with shuffled content
