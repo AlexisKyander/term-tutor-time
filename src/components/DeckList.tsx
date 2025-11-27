@@ -154,11 +154,13 @@ export const DeckList = ({
                             <Pencil className="w-3 h-3" />
                           </Button>
                         </div>
-                        <CardDescription>
-                          {deck.fromLanguage} → {deck.toLanguage}
-                        </CardDescription>
+                        {deck.deckType !== 'grammar-exercises' && (
+                          <CardDescription>
+                            {deck.fromLanguage} → {deck.toLanguage}
+                          </CardDescription>
+                        )}
                         <CardDescription className="text-xs">
-                          {vocabCount} words
+                          {vocabCount} {deck.deckType === 'grammar-exercises' ? 'exercise' : 'word'}{vocabCount !== 1 ? 's' : ''}
                           {isCompleted && (
                             <span className="text-green-600 ml-2">• All mastered</span>
                           )}
