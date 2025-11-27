@@ -86,7 +86,10 @@ export const VocabularyList = ({ vocabulary, onDelete, onEdit, onView, onPractic
         <CardHeader>
           <CardTitle>{deckName}</CardTitle>
           <CardDescription>
-            {fromLanguage} → {toLanguage} ({vocabulary.length} words)
+            {isGrammarExercises 
+              ? `${vocabulary.length} exercise${vocabulary.length !== 1 ? 's' : ''}`
+              : `${fromLanguage} → ${toLanguage} (${vocabulary.length} word${vocabulary.length !== 1 ? 's' : ''})`
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
