@@ -1,13 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Brain, BookOpen } from "lucide-react";
+import { ArrowLeft, Brain, BookOpen, Shuffle } from "lucide-react";
 import { VocabularyItem } from "@/pages/Index";
 
 interface ExerciseSelectorProps {
   exercises: VocabularyItem[];
   deckName: string;
   onSelectExercise: (exerciseId: string) => void;
-  onStudyAll: () => void;
+  onStudyAll: (shuffle?: boolean) => void;
   onBack: () => void;
 }
 
@@ -31,10 +31,16 @@ export const ExerciseSelector = ({
             <p className="text-muted-foreground">Choose an exercise to practice</p>
           </div>
         </div>
-        <Button onClick={onStudyAll} size="lg" className="gap-2">
-          <Brain className="w-5 h-5" />
-          Study All Exercises
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => onStudyAll(false)} size="lg" className="gap-2">
+            <Brain className="w-5 h-5" />
+            Study All Exercises
+          </Button>
+          <Button onClick={() => onStudyAll(true)} size="lg" variant="outline" className="gap-2">
+            <Shuffle className="w-5 h-5" />
+            Shuffle Questions
+          </Button>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
