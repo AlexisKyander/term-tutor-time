@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, RotateCcw, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, RotateCcw, CheckCircle, XCircle, Shuffle } from "lucide-react";
 import { VocabularyItem } from "@/pages/Index";
 import { StudySettings } from "@/components/Settings";
 import { useToast } from "@/hooks/use-toast";
@@ -289,6 +289,91 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
     }
   };
 
+  const shuffleQuestions = () => {
+    if (!currentCard.clozeText || !currentCard.clozeAnswers) return;
+
+    // Parse the cloze text to identify question boundaries
+    const parts = currentCard.clozeText.split(/(\(\d+\))/);
+    const questions: Array<{ text: string[]; answerIndices: number[] }> = [];
+    let currentQuestion: { text: string[]; answerIndices: number[] } = { text: [], answerIndices: [] };
+    let blankCounter = 0;
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      
+      if (/^\(\d+\)$/.test(part)) {
+        // This is a blank
+        currentQuestion.text.push(part);
+        currentQuestion.answerIndices.push(blankCounter);
+        blankCounter++;
+        
+        // Check if next part starts a new question
+        const nextPart = parts[i + 1];
+        if (nextPart) {
+          // New question if: starts with capital letter OR starts with newline
+          const startsWithCapital = /^[A-ZÅÄÖ]/.test(nextPart.trimStart());
+          const startsWithNewline = /^\n/.test(nextPart);
+          
+          if (startsWithCapital || startsWithNewline) {
+            // Save current question and start new one
+            questions.push(currentQuestion);
+            currentQuestion = { text: [], answerIndices: [] };
+          }
+        }
+      } else {
+        // This is text
+        currentQuestion.text.push(part);
+      }
+    }
+    
+    // Add the last question if it has content
+    if (currentQuestion.text.length > 0 || currentQuestion.answerIndices.length > 0) {
+      questions.push(currentQuestion);
+    }
+
+    // Shuffle the questions
+    const shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
+
+    // Reconstruct the text with renumbered blanks
+    let newBlankCounter = 1;
+    const newAnswers: string[] = [];
+    const newText = shuffledQuestions.map(question => {
+      let blankIndexInQuestion = 0;
+      return question.text.map(part => {
+        if (/^\(\d+\)$/.test(part)) {
+          // This is a blank - renumber it and get the corresponding answer
+          const originalIndex = question.answerIndices[blankIndexInQuestion];
+          newAnswers.push(currentCard.clozeAnswers![originalIndex]);
+          blankIndexInQuestion++;
+          return `(${newBlankCounter++})`;
+        }
+        return part;
+      }).join('');
+    }).join('');
+
+    // Update the current card with shuffled content
+    const updatedCard = {
+      ...currentCard,
+      clozeText: newText,
+      clozeAnswers: newAnswers
+    };
+
+    // Update the shuffled vocabulary array
+    setShuffledVocabulary(prev => {
+      const newVocabulary = [...prev];
+      newVocabulary[currentIndex] = updatedCard;
+      return newVocabulary;
+    });
+
+    // Reset the cloze answers for the user
+    setClozeAnswers(Array(newAnswers.length).fill(""));
+    
+    toast({
+      title: "Questions shuffled",
+      description: "The order of questions has been randomized",
+    });
+  };
+
   if (!currentCard && !sessionComplete) {
     return (
       <div className="max-w-2xl mx-auto">
@@ -367,6 +452,20 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                   {currentCard.exerciseDescription}
                 </ReactMarkdown>
               </div>
+            </div>
+          )}
+
+          {currentCard.exerciseType === 'cloze-test' && !showResult && (
+            <div className="flex justify-end mb-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={shuffleQuestions}
+                className="gap-2"
+              >
+                <Shuffle className="w-4 h-4" />
+                Shuffle Questions
+              </Button>
             </div>
           )}
           
