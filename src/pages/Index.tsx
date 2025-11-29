@@ -909,6 +909,7 @@ const Index = () => {
       case 'exercise-selector': {
         const currentDeck = getCurrentDeck();
         const exercises = getCurrentVocabulary().filter(v => v.type === 'grammar-exercise');
+        const grammarRules = getCurrentVocabulary().filter(v => v.type === 'grammar-rule');
         if (!currentDeck) {
           setMode('decks');
           return null;
@@ -917,6 +918,7 @@ const Index = () => {
           <ExerciseSelector
             exercises={exercises}
             deckName={currentDeck.name}
+            availableGrammarRules={grammarRules}
             onSelectExercise={practiceExercise}
             onStudyAll={studyAllExercises}
             onBack={() => setMode('decks')}
