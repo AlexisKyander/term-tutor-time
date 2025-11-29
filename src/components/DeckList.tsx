@@ -200,16 +200,18 @@ export const DeckList = ({
                       <Brain className="w-3 h-3" />
                       Study
                     </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      className="gap-1"
-                      onClick={() => onPreviewDeck(deck.id)}
-                      disabled={vocabCount === 0}
-                    >
-                      <Eye className="w-3 h-3" />
-                      Preview
-                    </Button>
+                    {deck.deckType !== 'grammar-exercises' && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="gap-1"
+                        onClick={() => onPreviewDeck(deck.id)}
+                        disabled={vocabCount === 0}
+                      >
+                        <Eye className="w-3 h-3" />
+                        Preview
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
