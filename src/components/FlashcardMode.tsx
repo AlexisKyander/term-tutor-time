@@ -561,7 +561,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                   Question
                 </p>
                 {currentCard.exerciseType === 'cloze-test' && currentCard.clozeText ? (
-                  <div className="text-2xl font-bold leading-relaxed pr-8 relative whitespace-pre-wrap">
+                  <div className="text-2xl font-bold leading-relaxed pr-8 relative whitespace-pre-wrap text-left">
                     {(() => {
                       let blankCounter = -1;
                       const parts = currentCard.clozeText!.split(/(\(\d+\))/);
@@ -610,7 +610,10 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                                 {line && (
                                   <span className="prose prose-lg max-w-none dark:prose-invert prose-strong:text-foreground prose-em:text-foreground inline">
                                     <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
-                                      p: ({node, ...props}) => <span {...props} />
+                                      p: ({node, ...props}) => <span {...props} />,
+                                      ol: ({node, ...props}) => <span {...props} />,
+                                      ul: ({node, ...props}) => <span {...props} />,
+                                      li: ({node, ...props}) => <span {...props} />
                                     }}>
                                       {line}
                                     </ReactMarkdown>
