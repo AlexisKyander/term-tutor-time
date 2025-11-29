@@ -909,7 +909,8 @@ const Index = () => {
       case 'exercise-selector': {
         const currentDeck = getCurrentDeck();
         const exercises = getCurrentVocabulary().filter(v => v.type === 'grammar-exercise');
-        const grammarRules = getCurrentVocabulary().filter(v => v.type === 'grammar-rule');
+        // Get ALL grammar rules from all decks, not just current deck
+        const grammarRules = vocabulary.filter(v => v.type === 'grammar-rule');
         if (!currentDeck) {
           setMode('decks');
           return null;
