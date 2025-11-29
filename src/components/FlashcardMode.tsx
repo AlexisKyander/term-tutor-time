@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, RotateCcw, CheckCircle, XCircle, Shuffle, Undo2, BookOpen } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { VocabularyItem } from "@/pages/Index";
 import { StudySettings } from "@/components/Settings";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +36,8 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   const [repetitionCount, setRepetitionCount] = useState<Record<string, { incorrect: number, almostCorrect: number }>>({});
   const [originalClozeState, setOriginalClozeState] = useState<{ text: string, answers: string[] } | null>(null);
   const [viewingGrammarRule, setViewingGrammarRule] = useState<VocabularyItem | null>(null);
+  const [checkAsYouGo, setCheckAsYouGo] = useState(false);
+  const [clozeAnswerStatus, setClozeAnswerStatus] = useState<('unchecked' | 'correct' | 'incorrect')[]>([]);
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const clozeInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -42,6 +46,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   useEffect(() => {
     if (currentCard?.exerciseType === 'cloze-test' && currentCard.clozeAnswers) {
       setClozeAnswers(Array(currentCard.clozeAnswers.length).fill(""));
+      setClozeAnswerStatus(Array(currentCard.clozeAnswers.length).fill('unchecked'));
       clozeInputRefs.current = Array(currentCard.clozeAnswers.length).fill(null);
     }
   }, [currentIndex]);
@@ -239,6 +244,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
       setCurrentIndex(prev => prev + 1);
       setUserAnswer("");
       setClozeAnswers([]);
+      setClozeAnswerStatus([]);
       setShowResult(false);
     } else {
       setSessionComplete(true);
@@ -276,10 +282,26 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
     }
   };
 
+  const checkClozeAnswerAsYouGo = (index: number) => {
+    if (!checkAsYouGo || !currentCard.clozeAnswers) return;
+    
+    const userAns = normalizeText(clozeAnswers[index]);
+    const correctAns = normalizeText(currentCard.clozeAnswers[index]);
+    
+    const newStatus = [...clozeAnswerStatus];
+    newStatus[index] = userAns === correctAns ? 'correct' : 'incorrect';
+    setClozeAnswerStatus(newStatus);
+  };
+
   const handleClozeKeyPress = (e: React.KeyboardEvent, index: number) => {
     if (e.key === 'Enter') {
       e.stopPropagation();
       e.preventDefault();
+      
+      // Check the current answer if in "check as you go" mode
+      if (checkAsYouGo && clozeAnswers[index].trim()) {
+        checkClozeAnswerAsYouGo(index);
+      }
       
       // If not the last input, move to next input
       if (index < clozeAnswers.length - 1) {
@@ -288,7 +310,10 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
           nextInput.focus();
         }
       } else {
-        // If it's the last input, move focus to the "Check Answer" button
+        // If it's the last input, check it and then move focus to the "Check Answer" button
+        if (checkAsYouGo && clozeAnswers[index].trim()) {
+          checkClozeAnswerAsYouGo(index);
+        }
         checkAnswerButtonRef.current?.focus();
       }
     }
@@ -392,6 +417,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
 
     // Reset the cloze answers for the user
     setClozeAnswers(Array(newAnswers.length).fill(""));
+    setClozeAnswerStatus(Array(newAnswers.length).fill('unchecked'));
     
     toast({
       title: "Questions shuffled",
@@ -418,6 +444,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
 
     // Reset the cloze answers for the user
     setClozeAnswers(Array(originalClozeState.answers.length).fill(""));
+    setClozeAnswerStatus(Array(originalClozeState.answers.length).fill('unchecked'));
     
     // Clear the saved original state
     setOriginalClozeState(null);
@@ -530,27 +557,39 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
           )}
 
           {currentCard.exerciseType === 'cloze-test' && !showResult && (
-            <div className="flex justify-end gap-2 mb-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={shuffleQuestions}
-                className="gap-2"
-              >
-                <Shuffle className="w-4 h-4" />
-                Shuffle Questions
-              </Button>
-              {originalClozeState && (
+            <div className="flex justify-between items-center gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="check-as-you-go"
+                  checked={checkAsYouGo}
+                  onCheckedChange={setCheckAsYouGo}
+                />
+                <Label htmlFor="check-as-you-go" className="text-sm cursor-pointer">
+                  Check as you go
+                </Label>
+              </div>
+              <div className="flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={resetQuestionOrder}
+                  onClick={shuffleQuestions}
                   className="gap-2"
                 >
-                  <Undo2 className="w-4 h-4" />
-                  Reset Order
+                  <Shuffle className="w-4 h-4" />
+                  Shuffle Questions
                 </Button>
-              )}
+                {originalClozeState && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={resetQuestionOrder}
+                    className="gap-2"
+                  >
+                    <Undo2 className="w-4 h-4" />
+                    Reset Order
+                  </Button>
+                )}
+              </div>
             </div>
           )}
           
@@ -593,8 +632,17 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                                     setClozeAnswers(newAnswers);
                                   }}
                                   onKeyDown={(e) => handleClozeKeyPress(e, idx)}
+                                  onBlur={() => {
+                                    if (checkAsYouGo && clozeAnswers[idx].trim()) {
+                                      checkClozeAnswerAsYouGo(idx);
+                                    }
+                                  }}
                                   placeholder=""
-                                  className="inline-block w-28 h-9 text-lg text-center px-2 py-1"
+                                  className={`inline-block w-28 h-9 text-lg text-center px-2 py-1 ${
+                                    checkAsYouGo && clozeAnswerStatus[idx] === 'correct' ? 'bg-green-100 border-green-500 dark:bg-green-900/30' :
+                                    checkAsYouGo && clozeAnswerStatus[idx] === 'incorrect' ? 'bg-red-100 border-red-500 dark:bg-red-900/30' :
+                                    ''
+                                  }`}
                                   disabled={showResult}
                                 />
                               )}
