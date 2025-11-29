@@ -119,17 +119,18 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
       if (clozeAnswers.some(a => !a.trim())) return;
       
       const correctAnswers = currentCard.clozeAnswers || [];
-      let allCorrect = true;
+      let correctCount = 0;
       
       for (let i = 0; i < correctAnswers.length; i++) {
         const userAns = normalizeText(clozeAnswers[i]);
         const correctAns = normalizeText(correctAnswers[i]);
         
-        if (userAns !== correctAns) {
-          allCorrect = false;
+        if (userAns === correctAns) {
+          correctCount++;
         }
       }
       
+      const allCorrect = correctCount === correctAnswers.length;
       setIsCorrect(allCorrect);
       setShowResult(true);
       
@@ -140,8 +141,8 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
       onUpdateStatistics(currentCard.id, result);
       
       setScore(prev => ({
-        correct: prev.correct + (allCorrect ? 1 : 0),
-        total: prev.total + 1
+        correct: prev.correct + correctCount,
+        total: prev.total + correctAnswers.length
       }));
       
       (document.activeElement as HTMLElement)?.blur();
@@ -248,10 +249,6 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
       setShowResult(false);
     } else {
       setSessionComplete(true);
-      toast({
-        title: "Session Complete!",
-        description: `You scored ${score.correct} out of ${score.total + 1}`,
-      });
     }
   };
 
