@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen, Plus, Trash2, Brain, Settings, CheckCircle, Pencil, Eye, Info } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ArrowLeft, BookOpen, Plus, Trash2, Brain, Settings, CheckCircle, Pencil, Eye, Info, FileText } from "lucide-react";
 
 export interface Deck {
   id: string;
@@ -13,6 +15,7 @@ export interface Deck {
   fromLanguage: string;
   toLanguage: string;
   information?: string;
+  originalText?: string;
   deckType?: 'grammar-exercises' | 'grammar-rules';
   createdAt: Date;
 }
@@ -48,6 +51,8 @@ export const DeckList = ({
 }: DeckListProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deckToDelete, setDeckToDelete] = useState<string | null>(null);
+  const [originalTextDialogOpen, setOriginalTextDialogOpen] = useState(false);
+  const [selectedDeckOriginalText, setSelectedDeckOriginalText] = useState<{ name: string; text: string } | null>(null);
 
   const handleDeleteClick = (deckId: string) => {
     setDeckToDelete(deckId);
@@ -59,6 +64,13 @@ export const DeckList = ({
       onDeleteDeck(deckToDelete);
       setDeleteDialogOpen(false);
       setDeckToDelete(null);
+    }
+  };
+
+  const handleViewOriginalText = (deck: Deck) => {
+    if (deck.originalText) {
+      setSelectedDeckOriginalText({ name: deck.name, text: deck.originalText });
+      setOriginalTextDialogOpen(true);
     }
   };
 
@@ -181,7 +193,7 @@ export const DeckList = ({
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className={`grid ${deck.deckType === 'grammar-exercises' ? 'grid-cols-2' : 'grid-cols-4'} gap-2`}>
                     <Button 
                       size="sm" 
                       variant="outline" 
@@ -201,16 +213,28 @@ export const DeckList = ({
                       Study
                     </Button>
                     {deck.deckType !== 'grammar-exercises' && (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        className="gap-1"
-                        onClick={() => onPreviewDeck(deck.id)}
-                        disabled={vocabCount === 0}
-                      >
-                        <Eye className="w-3 h-3" />
-                        Preview
-                      </Button>
+                      <>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="gap-1"
+                          onClick={() => onPreviewDeck(deck.id)}
+                          disabled={vocabCount === 0}
+                        >
+                          <Eye className="w-3 h-3" />
+                          Preview
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="gap-1"
+                          onClick={() => handleViewOriginalText(deck)}
+                          disabled={!deck.originalText}
+                        >
+                          <FileText className="w-3 h-3" />
+                          Text
+                        </Button>
+                      </>
                     )}
                   </div>
                 </CardContent>
@@ -234,6 +258,17 @@ export const DeckList = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={originalTextDialogOpen} onOpenChange={setOriginalTextDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Original Text - {selectedDeckOriginalText?.name}</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-[60vh] w-full rounded-md border p-4">
+            <p className="whitespace-pre-wrap text-sm">{selectedDeckOriginalText?.text}</p>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
     </>
   );

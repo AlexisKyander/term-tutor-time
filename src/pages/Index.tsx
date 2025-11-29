@@ -279,7 +279,7 @@ const Index = () => {
     });
   };
 
-  const addDeck = (name: string, fromLanguage: string, toLanguage: string, information?: string) => {
+  const addDeck = (name: string, fromLanguage: string, toLanguage: string, information?: string, originalText?: string) => {
     if (!navigation.currentFolderId) return;
     
     // Determine deck type based on parent folder
@@ -301,6 +301,7 @@ const Index = () => {
       fromLanguage,
       toLanguage,
       information,
+      originalText,
       deckType,
       createdAt: new Date(),
     };
@@ -308,9 +309,9 @@ const Index = () => {
     setMode('decks');
   };
 
-  const updateDeck = (id: string, name: string, fromLanguage: string, toLanguage: string, information?: string) => {
+  const updateDeck = (id: string, name: string, fromLanguage: string, toLanguage: string, information?: string, originalText?: string) => {
     setDecks(prev => prev.map(deck => 
-      deck.id === id ? { ...deck, name, fromLanguage, toLanguage, information } : deck
+      deck.id === id ? { ...deck, name, fromLanguage, toLanguage, information, originalText } : deck
     ));
     setMode('decks');
     toast({
