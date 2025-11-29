@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Brain, BookOpen } from "lucide-react";
 import { VocabularyItem } from "@/pages/Index";
 
 interface ExerciseSelectorProps {
   exercises: VocabularyItem[];
   deckName: string;
+  availableGrammarRules: VocabularyItem[];
   onSelectExercise: (exerciseId: string) => void;
   onStudyAll: () => void;
   onBack: () => void;
@@ -14,6 +16,7 @@ interface ExerciseSelectorProps {
 export const ExerciseSelector = ({
   exercises,
   deckName,
+  availableGrammarRules,
   onSelectExercise,
   onStudyAll,
   onBack,
@@ -58,9 +61,24 @@ export const ExerciseSelector = ({
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              {exercise.exerciseDescription && (
-                <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                  {exercise.exerciseDescription}
+              {exercise.linkedGrammarRules && exercise.linkedGrammarRules.length > 0 ? (
+                <div className="mb-3">
+                  <p className="text-xs text-muted-foreground mb-2">Linked to:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {exercise.linkedGrammarRules.map((ruleId) => {
+                      const rule = availableGrammarRules.find(r => r.id === ruleId);
+                      if (!rule) return null;
+                      return (
+                        <Badge key={ruleId} variant="secondary" className="text-xs">
+                          {rule.title || 'Untitled Rule'}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground mb-3 italic">
+                  No grammar rules linked
                 </p>
               )}
               <Button 
