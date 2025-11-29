@@ -264,6 +264,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
     setCurrentIndex(0);
     setUserAnswer("");
     setClozeAnswers([]);
+    setClozeAnswerStatus([]);
     setShowResult(false);
     setScore({ correct: 0, total: 0 });
     setSessionComplete(false);
