@@ -3,13 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, RotateCcw, CheckCircle, XCircle, Shuffle, Undo2, BookOpen } from "lucide-react";
+import { ArrowLeft, RotateCcw, CheckCircle, XCircle, Shuffle, Undo2, BookOpen, FileText } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { VocabularyItem } from "@/pages/Index";
 import { StudySettings } from "@/components/Settings";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -22,9 +23,10 @@ interface FlashcardModeProps {
   onUpdateStatistics: (vocabularyId: string, result: 'correct' | 'almostCorrect' | 'incorrect') => void;
   direction: 'forward' | 'reverse';
   availableGrammarRules?: VocabularyItem[];
+  originalText?: string;
 }
 
-export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics, direction, availableGrammarRules = [] }: FlashcardModeProps) => {
+export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics, direction, availableGrammarRules = [], originalText }: FlashcardModeProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState("");
   const [clozeAnswers, setClozeAnswers] = useState<string[]>([]);
@@ -36,6 +38,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   const [repetitionCount, setRepetitionCount] = useState<Record<string, { incorrect: number, almostCorrect: number }>>({});
   const [originalClozeState, setOriginalClozeState] = useState<{ text: string, answers: string[] } | null>(null);
   const [viewingGrammarRule, setViewingGrammarRule] = useState<VocabularyItem | null>(null);
+  const [viewingOriginalText, setViewingOriginalText] = useState(false);
   const [checkAsYouGo, setCheckAsYouGo] = useState(false);
   const [clozeAnswerStatus, setClozeAnswerStatus] = useState<('unchecked' | 'correct' | 'incorrect')[]>([]);
   const { toast } = useToast();
@@ -554,6 +557,20 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
             </div>
           )}
 
+          {originalText && (
+            <div className="flex justify-center mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => setViewingOriginalText(true)}
+              >
+                <FileText className="w-4 h-4" />
+                View Original Text
+              </Button>
+            </div>
+          )}
+
           {currentCard.exerciseType === 'cloze-test' && !showResult && (
             <div className="flex justify-between items-center gap-2 mb-2">
               <div className="flex items-center gap-2">
@@ -836,6 +853,17 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
               {viewingGrammarRule?.rule || ""}
             </ReactMarkdown>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={viewingOriginalText} onOpenChange={setViewingOriginalText}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Original Text</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-[60vh] w-full rounded-md border p-4">
+            <p className="whitespace-pre-wrap text-sm">{originalText}</p>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </div>

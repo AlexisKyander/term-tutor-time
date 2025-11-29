@@ -961,6 +961,7 @@ const Index = () => {
             settings={settings}
             direction={navigation.studyDirection}
             availableGrammarRules={availableGrammarRules}
+            originalText={currentDeck.originalText}
             onBack={() => {
               const wasPracticingSingle = navigation.practicingVocabularyId !== undefined;
               const deck = getCurrentDeck();
