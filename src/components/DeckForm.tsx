@@ -11,9 +11,9 @@ interface DeckFormProps {
   folderName: string;
   defaultFromLanguage?: string;
   defaultToLanguage?: string;
-  editingDeck?: { id: string; name: string; fromLanguage: string; toLanguage: string; information?: string };
-  onAdd: (name: string, fromLanguage: string, toLanguage: string, information?: string) => void;
-  onUpdate?: (id: string, name: string, fromLanguage: string, toLanguage: string, information?: string) => void;
+  editingDeck?: { id: string; name: string; fromLanguage: string; toLanguage: string; information?: string; originalText?: string };
+  onAdd: (name: string, fromLanguage: string, toLanguage: string, information?: string, originalText?: string) => void;
+  onUpdate?: (id: string, name: string, fromLanguage: string, toLanguage: string, information?: string, originalText?: string) => void;
   onBack: () => void;
   folderType?: 'grammar-exercises' | 'grammar-rules';
 }
@@ -23,6 +23,7 @@ export const DeckForm = ({ folderName, defaultFromLanguage, defaultToLanguage, e
   const [fromLanguage, setFromLanguage] = useState(editingDeck?.fromLanguage || defaultFromLanguage || "English");
   const [toLanguage, setToLanguage] = useState(editingDeck?.toLanguage || defaultToLanguage || "Spanish");
   const [information, setInformation] = useState(editingDeck?.information || "");
+  const [originalText, setOriginalText] = useState(editingDeck?.originalText || "");
   const { toast } = useToast();
   const isEditing = !!editingDeck;
 
@@ -51,13 +52,13 @@ export const DeckForm = ({ folderName, defaultFromLanguage, defaultToLanguage, e
     }
 
     if (isEditing && editingDeck && onUpdate) {
-      onUpdate(editingDeck.id, name.trim(), fromLanguage.trim(), toLanguage.trim(), information.trim() || undefined);
+      onUpdate(editingDeck.id, name.trim(), fromLanguage.trim(), toLanguage.trim(), information.trim() || undefined, originalText.trim() || undefined);
       toast({
         title: "Success!",
         description: "Deck updated successfully",
       });
     } else {
-      onAdd(name.trim(), fromLanguage.trim(), toLanguage.trim(), information.trim() || undefined);
+      onAdd(name.trim(), fromLanguage.trim(), toLanguage.trim(), information.trim() || undefined, originalText.trim() || undefined);
       toast({
         title: "Success!",
         description: "Deck created successfully",
@@ -69,6 +70,7 @@ export const DeckForm = ({ folderName, defaultFromLanguage, defaultToLanguage, e
       setFromLanguage("English");
       setToLanguage("Spanish");
       setInformation("");
+      setOriginalText("");
     }
   };
 
@@ -132,6 +134,19 @@ export const DeckForm = ({ folderName, defaultFromLanguage, defaultToLanguage, e
                 rows={3}
               />
             </div>
+
+            {folderType !== 'grammar-exercises' && (
+              <div className="space-y-2">
+                <Label htmlFor="originalText">Original Text (optional)</Label>
+                <Textarea
+                  id="originalText"
+                  placeholder="Paste the original text that the vocabulary is taken from..."
+                  value={originalText}
+                  onChange={(e) => setOriginalText(e.target.value)}
+                  rows={6}
+                />
+              </div>
+            )}
             
             <div className="flex gap-2">
               <Button type="submit" className="flex-1">
