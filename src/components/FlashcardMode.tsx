@@ -94,7 +94,11 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   const progress = ((currentIndex + 1) / shuffledVocabulary.length) * 100;
 
   const normalizeText = (text: string | undefined) => {
-    return (text || '').toLowerCase().trim().replace(/\.+$/, '');
+    return (text || '')
+      .toLowerCase()
+      .trim()
+      .replace(/\.+$/, '')
+      .replace(/['']/g, "'"); // Normalize curly apostrophes to straight apostrophes
   };
 
   const getEditDistance = (str1: string, str2: string): number => {
