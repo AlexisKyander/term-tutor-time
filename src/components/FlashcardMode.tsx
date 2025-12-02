@@ -98,7 +98,8 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
       .toLowerCase()
       .trim()
       .replace(/\.+$/, '')
-      .replace(/['']/g, "'"); // Normalize curly apostrophes to straight apostrophes
+      // Normalize all apostrophe/quote variants to ASCII apostrophe
+      .replace(/[\u2018\u2019\u0060\u00B4\u02BC\u2032]/g, "'");
   };
 
   const getEditDistance = (str1: string, str2: string): number => {
