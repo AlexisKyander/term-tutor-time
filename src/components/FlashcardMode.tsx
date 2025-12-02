@@ -45,6 +45,8 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
   const inputRef = useRef<HTMLInputElement>(null);
   const clozeInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const checkAnswerButtonRef = useRef<HTMLButtonElement | null>(null);
+  const currentCard = shuffledVocabulary[currentIndex];
+
   // Initialize cloze answers when card changes
   useEffect(() => {
     if (currentCard?.exerciseType === 'cloze-test' && currentCard.clozeAnswers) {
@@ -52,7 +54,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
       setClozeAnswerStatus(Array(currentCard.clozeAnswers.length).fill('unchecked'));
       clozeInputRefs.current = Array(currentCard.clozeAnswers.length).fill(null);
     }
-  }, [currentIndex]);
+  }, [currentIndex, currentCard?.id, currentCard?.exerciseType, currentCard?.clozeAnswers?.length]);
 
   useEffect(() => {
     // Create study deck - each word appears once at the start of each session
@@ -89,7 +91,6 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [showResult, currentIndex, shuffledVocabulary.length]);
 
-  const currentCard = shuffledVocabulary[currentIndex];
   const progress = ((currentIndex + 1) / shuffledVocabulary.length) * 100;
 
   const normalizeText = (text: string | undefined) => {
