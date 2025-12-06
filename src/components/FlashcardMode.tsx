@@ -671,10 +671,12 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                           );
                         }
                         
-                        // For text parts, preserve line breaks
+                        // For text parts, preserve single line breaks only (collapse multiple)
+                        // Remove leading/trailing empty lines and collapse consecutive newlines to single
+                        const normalizedPart = part.replace(/\n{2,}/g, '\n').replace(/^\n+/, '');
                         return (
                           <span key={i} className="inline">
-                            {part.split('\n').map((line, lineIdx) => (
+                            {normalizedPart.split('\n').map((line, lineIdx, arr) => (
                               <span key={lineIdx}>
                                 {line && (
                                   <span className="prose prose-lg max-w-none dark:prose-invert prose-strong:text-foreground prose-em:text-foreground inline">
@@ -688,7 +690,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                                     </ReactMarkdown>
                                   </span>
                                 )}
-                                {lineIdx < part.split('\n').length - 1 && <br />}
+                                {lineIdx < arr.length - 1 && <br />}
                               </span>
                             ))}
                           </span>
