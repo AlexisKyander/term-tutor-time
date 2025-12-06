@@ -683,12 +683,15 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                         }
                         
                         // For text parts, render inline without markdown list processing
-                        // Collapse multiple newlines to single, trim leading newlines
-                        const normalizedPart = part.replace(/\n{2,}/g, '\n').replace(/^\n+/, '');
+                        // Collapse multiple consecutive newlines to single, but preserve leading newlines for parts after blanks
+                        const normalizedPart = part.replace(/\n{2,}/g, '\n');
+                        const lines = normalizedPart.split('\n');
+                        
                         return (
                           <span key={i} className="inline">
-                            {normalizedPart.split('\n').map((line, lineIdx, arr) => (
+                            {lines.map((line, lineIdx, arr) => (
                               <span key={lineIdx} className="inline">
+                                {lineIdx > 0 && <br />}
                                 {line && (
                                   <span 
                                     className="prose prose-lg max-w-none dark:prose-invert prose-strong:text-foreground prose-em:text-foreground inline"
@@ -699,7 +702,6 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                                     }}
                                   />
                                 )}
-                                {lineIdx < arr.length - 1 && <br />}
                               </span>
                             ))}
                           </span>
