@@ -671,24 +671,22 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                           );
                         }
                         
-                        // For text parts, preserve single line breaks only (collapse multiple)
-                        // Remove leading/trailing empty lines and collapse consecutive newlines to single
+                        // For text parts, render inline without markdown list processing
+                        // Collapse multiple newlines to single, trim leading newlines
                         const normalizedPart = part.replace(/\n{2,}/g, '\n').replace(/^\n+/, '');
                         return (
                           <span key={i} className="inline">
                             {normalizedPart.split('\n').map((line, lineIdx, arr) => (
-                              <span key={lineIdx}>
+                              <span key={lineIdx} className="inline">
                                 {line && (
-                                  <span className="prose prose-lg max-w-none dark:prose-invert prose-strong:text-foreground prose-em:text-foreground inline">
-                                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
-                                      p: ({node, ...props}) => <span {...props} />,
-                                      ol: ({node, ...props}) => <span {...props} />,
-                                      ul: ({node, ...props}) => <span {...props} />,
-                                      li: ({node, ...props}) => <span {...props} />
-                                    }}>
-                                      {line}
-                                    </ReactMarkdown>
-                                  </span>
+                                  <span 
+                                    className="prose prose-lg max-w-none dark:prose-invert prose-strong:text-foreground prose-em:text-foreground inline"
+                                    dangerouslySetInnerHTML={{
+                                      __html: line
+                                        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                                        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                                    }}
+                                  />
                                 )}
                                 {lineIdx < arr.length - 1 && <br />}
                               </span>
