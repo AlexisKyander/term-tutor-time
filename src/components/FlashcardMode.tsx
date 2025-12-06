@@ -672,8 +672,11 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                         }
                         
                         // For text parts, collapse multiple newlines and filter empty lines
-                        // This ensures compact formatting without excessive blank rows
-                        const normalizedPart = part.replace(/\n{2,}/g, '\n').replace(/^\n+/, '').replace(/\n+$/, '');
+                        // Escape list markers (1. and -) to prevent markdown list interpretation
+                        const escapedPart = part
+                          .replace(/^(\d+)\./gm, '$1\\.') // Escape numbered list markers
+                          .replace(/^(\s*)-\s/gm, '$1\\- '); // Escape bullet list markers
+                        const normalizedPart = escapedPart.replace(/\n{2,}/g, '\n').replace(/^\n+/, '').replace(/\n+$/, '');
                         const lines = normalizedPart.split('\n').filter(line => line.trim() !== '');
                         
                         return (
