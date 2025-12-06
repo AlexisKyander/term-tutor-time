@@ -352,17 +352,28 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
         currentQuestion.answerIndices.push(blankCounter);
         blankCounter++;
         
-        // Check if next part starts a new question
+        // Check if next part contains a new question (newline followed by number like "2.")
         const nextPart = parts[i + 1];
         if (nextPart) {
-          // New question starts if: contains a line starting with a number (like "1." or "2.")
-          // We look for newline followed by a number pattern, which indicates a new numbered question
-          const containsNewNumberedQuestion = /\n\s*\d+\.\s/.test(nextPart);
+          const newQuestionMatch = nextPart.match(/(\n\s*)(\d+\.\s)/);
           
-          if (containsNewNumberedQuestion) {
-            // Save current question and start new one
+          if (newQuestionMatch) {
+            // Split the next part: text before the number stays with current question
+            const splitIndex = nextPart.indexOf(newQuestionMatch[0]);
+            const textForCurrentQuestion = nextPart.substring(0, splitIndex + newQuestionMatch[1].length);
+            const textForNewQuestion = nextPart.substring(splitIndex + newQuestionMatch[1].length);
+            
+            // Add remaining text to current question and save it
+            if (textForCurrentQuestion) {
+              currentQuestion.text.push(textForCurrentQuestion);
+            }
             questions.push(currentQuestion);
-            currentQuestion = { text: [], answerIndices: [] };
+            
+            // Start new question with the number and rest of text
+            currentQuestion = { text: [textForNewQuestion], answerIndices: [] };
+            
+            // Skip the next part since we already processed it
+            i++;
           }
         }
       } else {
