@@ -355,13 +355,11 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
         // Check if next part starts a new question
         const nextPart = parts[i + 1];
         if (nextPart) {
-          // New question if: starts with capital letter, number (like "1."), OR starts with newline
-          const trimmedNext = nextPart.trimStart();
-          const startsWithCapital = /^[A-ZÅÄÖ]/.test(trimmedNext);
-          const startsWithNumber = /^\d+\./.test(trimmedNext);
-          const startsWithNewline = /^\n/.test(nextPart);
+          // New question starts if: contains a line starting with a number (like "1." or "2.")
+          // We look for newline followed by a number pattern, which indicates a new numbered question
+          const containsNewNumberedQuestion = /\n\s*\d+\.\s/.test(nextPart);
           
-          if (startsWithCapital || startsWithNumber || startsWithNewline) {
+          if (containsNewNumberedQuestion) {
             // Save current question and start new one
             questions.push(currentQuestion);
             currentQuestion = { text: [], answerIndices: [] };
