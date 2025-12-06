@@ -352,16 +352,19 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
         currentQuestion.answerIndices.push(blankCounter);
         blankCounter++;
         
-        // Check if next part contains a new question (newline followed by number like "2.")
+        // Check if next part contains a new question
         const nextPart = parts[i + 1];
         if (nextPart) {
-          const newQuestionMatch = nextPart.match(/(\n\s*)(\d+\.\s)/);
+          // First check for numbered questions (like "2.")
+          const numberedMatch = nextPart.match(/(\n\s*)(\d+\.\s)/);
+          // Then check for double newlines (paragraph breaks) indicating new unnumbered questions
+          const doubleNewlineMatch = nextPart.match(/(\n\s*\n)/);
           
-          if (newQuestionMatch) {
+          if (numberedMatch) {
             // Split the next part: text before the number stays with current question
-            const splitIndex = nextPart.indexOf(newQuestionMatch[0]);
-            const textForCurrentQuestion = nextPart.substring(0, splitIndex + newQuestionMatch[1].length);
-            const textForNewQuestion = nextPart.substring(splitIndex + newQuestionMatch[1].length);
+            const splitIndex = nextPart.indexOf(numberedMatch[0]);
+            const textForCurrentQuestion = nextPart.substring(0, splitIndex + numberedMatch[1].length);
+            const textForNewQuestion = nextPart.substring(splitIndex + numberedMatch[1].length);
             
             // Add remaining text to current question and save it
             if (textForCurrentQuestion) {
@@ -371,6 +374,23 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
             
             // Start new question with the number and rest of text
             currentQuestion = { text: [textForNewQuestion], answerIndices: [] };
+            
+            // Skip the next part since we already processed it
+            i++;
+          } else if (doubleNewlineMatch) {
+            // For unnumbered questions, detect new question by double newline after a blank
+            const splitIndex = nextPart.indexOf(doubleNewlineMatch[0]);
+            const textForCurrentQuestion = nextPart.substring(0, splitIndex);
+            const textForNewQuestion = nextPart.substring(splitIndex + doubleNewlineMatch[0].length);
+            
+            // Add remaining text to current question and save it
+            if (textForCurrentQuestion) {
+              currentQuestion.text.push(textForCurrentQuestion);
+            }
+            questions.push(currentQuestion);
+            
+            // Start new question with the rest of text
+            currentQuestion = { text: textForNewQuestion ? [textForNewQuestion] : [], answerIndices: [] };
             
             // Skip the next part since we already processed it
             i++;
