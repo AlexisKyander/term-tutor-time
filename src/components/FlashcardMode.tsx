@@ -671,25 +671,25 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                           );
                         }
                         
-                        // For text parts, preserve single line breaks only (collapse multiple)
-                        // Remove leading/trailing empty lines and collapse consecutive newlines to single
-                        const normalizedPart = part.replace(/\n{2,}/g, '\n').replace(/^\n+/, '');
+                        // For text parts, collapse multiple newlines and filter empty lines
+                        // This ensures compact formatting without excessive blank rows
+                        const normalizedPart = part.replace(/\n{2,}/g, '\n').replace(/^\n+/, '').replace(/\n+$/, '');
+                        const lines = normalizedPart.split('\n').filter(line => line.trim() !== '');
+                        
                         return (
                           <span key={i} className="inline">
-                            {normalizedPart.split('\n').map((line, lineIdx, arr) => (
+                            {lines.map((line, lineIdx, arr) => (
                               <span key={lineIdx}>
-                                {line && (
-                                  <span className="prose prose-lg max-w-none dark:prose-invert prose-strong:text-foreground prose-em:text-foreground inline">
-                                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
-                                      p: ({node, ...props}) => <span {...props} />,
-                                      ol: ({node, ...props}) => <span {...props} />,
-                                      ul: ({node, ...props}) => <span {...props} />,
-                                      li: ({node, ...props}) => <span {...props} />
-                                    }}>
-                                      {line}
-                                    </ReactMarkdown>
-                                  </span>
-                                )}
+                                <span className="prose prose-lg max-w-none dark:prose-invert prose-strong:text-foreground prose-em:text-foreground inline">
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
+                                    p: ({node, ...props}) => <span {...props} />,
+                                    ol: ({node, ...props}) => <span {...props} />,
+                                    ul: ({node, ...props}) => <span {...props} />,
+                                    li: ({node, ...props}) => <span {...props} />
+                                  }}>
+                                    {line}
+                                  </ReactMarkdown>
+                                </span>
                                 {lineIdx < arr.length - 1 && <br />}
                               </span>
                             ))}
