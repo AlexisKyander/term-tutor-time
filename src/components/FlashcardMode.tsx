@@ -710,7 +710,16 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                                     }
                                   }}
                                   placeholder=""
-                                  className={`inline-block w-28 h-9 text-lg text-center px-2 py-1 ${
+                                  className={`inline-block h-9 text-lg text-center px-2 py-1 ${
+                                    (() => {
+                                      const answerLength = Array.isArray(currentCard.answer) ? (currentCard.answer[idx]?.length || 8) : 8;
+                                      if (answerLength <= 4) return 'w-20';
+                                      if (answerLength <= 8) return 'w-28';
+                                      if (answerLength <= 12) return 'w-36';
+                                      if (answerLength <= 18) return 'w-48';
+                                      return 'w-64';
+                                    })()
+                                  } ${
                                     checkAsYouGo && clozeAnswerStatus[idx] === 'correct' ? 'bg-green-100 border-green-500 dark:bg-green-900/30' :
                                     checkAsYouGo && clozeAnswerStatus[idx] === 'incorrect' ? 'bg-red-100 border-red-500 dark:bg-red-900/30' :
                                     ''
