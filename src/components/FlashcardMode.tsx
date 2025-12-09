@@ -711,7 +711,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                                   }}
                                   placeholder=""
                                   style={{
-                                    width: `${Math.max(80, Math.min(200, (Array.isArray(currentCard.answer) ? (currentCard.answer[idx]?.length || 8) : 8) * 12 + 24))}px`
+                                    width: `${Math.max(80, Math.min(200, (currentCard.clozeAnswers?.[idx]?.length || 8) * 12 + 24))}px`
                                   }}
                                   className={`inline-block h-9 text-lg text-center px-2 py-1 ${
                                     checkAsYouGo && clozeAnswerStatus[idx] === 'correct' ? 'bg-green-100 border-green-500 dark:bg-green-900/30' :
