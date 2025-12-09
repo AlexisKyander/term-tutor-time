@@ -674,7 +674,7 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                 {currentCard.exerciseType === 'cloze-test' && currentCard.clozeText ? (
                   <div className="text-2xl font-bold leading-relaxed pr-8 relative whitespace-pre-wrap text-left">
                     {(() => {
-                      let blankCounter = -1;
+                      let blankCounter = 0;
                       const parts = currentCard.clozeText!.split(/(\(\d+\))/);
                       
                       return parts.map((part, i) => {
