@@ -359,6 +359,8 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
           const numberedMatch = nextPart.match(/(\n\s*)(\d+\.\s)/);
           // Then check for double newlines (paragraph breaks) indicating new unnumbered questions
           const doubleNewlineMatch = nextPart.match(/(\n\s*\n)/);
+          // Check for single newline followed by capital letter (new unnumbered question)
+          const singleNewlineCapitalMatch = nextPart.match(/(\n)([A-Z])/);
           
           if (numberedMatch) {
             // Split the next part: text before the number stays with current question
@@ -390,6 +392,24 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
             questions.push(currentQuestion);
             
             // Start new question with the rest of text
+            currentQuestion = { text: textForNewQuestion ? [textForNewQuestion] : [], answerIndices: [] };
+            
+            // Skip the next part since we already processed it
+            i++;
+          } else if (singleNewlineCapitalMatch) {
+            // For unnumbered questions, detect new question by single newline followed by capital letter
+            const splitIndex = nextPart.indexOf(singleNewlineCapitalMatch[0]);
+            const textForCurrentQuestion = nextPart.substring(0, splitIndex);
+            // Include the capital letter in the new question
+            const textForNewQuestion = nextPart.substring(splitIndex + 1);
+            
+            // Add remaining text to current question and save it
+            if (textForCurrentQuestion) {
+              currentQuestion.text.push(textForCurrentQuestion);
+            }
+            questions.push(currentQuestion);
+            
+            // Start new question with the capital letter and rest of text
             currentQuestion = { text: textForNewQuestion ? [textForNewQuestion] : [], answerIndices: [] };
             
             // Skip the next part since we already processed it
