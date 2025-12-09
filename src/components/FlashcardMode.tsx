@@ -679,8 +679,8 @@ export const FlashcardMode = ({ vocabulary, settings, onBack, onUpdateStatistics
                       
                       return parts.map((part, i) => {
                         if (/^\(\d+\)$/.test(part)) {
-                          blankCounter++;
                           const idx = blankCounter;
+                          blankCounter++;
                           return (
                             <span key={i} className="inline-flex items-center mx-1 align-baseline relative">
                               <span className="absolute right-0 text-xs text-muted-foreground/60 select-none" style={{ marginRight: '-1.5rem' }}>
