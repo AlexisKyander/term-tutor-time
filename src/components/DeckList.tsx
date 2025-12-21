@@ -179,21 +179,37 @@ export const DeckList = ({
                         </CardDescription>
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteClick(deck.id);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      {deck.deckType !== 'grammar-exercises' && deck.originalText && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewOriginalText(deck);
+                          }}
+                          className="h-8 w-8 p-0"
+                          title="View original text"
+                        >
+                          <FileText className="w-4 h-4 text-muted-foreground" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(deck.id);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className={`grid ${deck.deckType === 'grammar-exercises' ? 'grid-cols-2' : 'grid-cols-4'} gap-2`}>
+                  <div className={`grid ${deck.deckType === 'grammar-exercises' ? 'grid-cols-2' : 'grid-cols-3'} gap-2`}>
                     <Button 
                       size="sm" 
                       variant="outline" 
@@ -213,28 +229,16 @@ export const DeckList = ({
                       Study
                     </Button>
                     {deck.deckType !== 'grammar-exercises' && (
-                      <>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="gap-1"
-                          onClick={() => onPreviewDeck(deck.id)}
-                          disabled={vocabCount === 0}
-                        >
-                          <Eye className="w-3 h-3" />
-                          Preview
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="gap-1"
-                          onClick={() => handleViewOriginalText(deck)}
-                          disabled={!deck.originalText}
-                        >
-                          <FileText className="w-3 h-3" />
-                          Text
-                        </Button>
-                      </>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="gap-1"
+                        onClick={() => onPreviewDeck(deck.id)}
+                        disabled={vocabCount === 0}
+                      >
+                        <Eye className="w-3 h-3" />
+                        Preview
+                      </Button>
                     )}
                   </div>
                 </CardContent>
