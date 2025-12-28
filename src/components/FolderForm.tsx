@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Folder } from "@/components/FolderList";
@@ -14,8 +15,8 @@ interface FolderFormProps {
   categoryName?: string;
   parentFolderId?: string;
   isSubFolder?: boolean;
-  onAdd: (name: string, fromLanguage: string, toLanguage: string, categoryId: string, parentFolderId?: string, description?: string) => void;
-  onUpdate?: (id: string, name: string, fromLanguage: string, toLanguage: string, description?: string) => void;
+  onAdd: (name: string, fromLanguage: string, toLanguage: string, categoryId: string, parentFolderId?: string, description?: string, language?: 'French' | 'Spanish' | 'Other') => void;
+  onUpdate?: (id: string, name: string, fromLanguage: string, toLanguage: string, description?: string, language?: 'French' | 'Spanish' | 'Other') => void;
   onBack: () => void;
 }
 
@@ -27,6 +28,7 @@ export const FolderForm = ({ editingFolder, categoryId, categoryName, parentFold
   const [fromLanguage, setFromLanguage] = useState("");
   const [toLanguage, setToLanguage] = useState("");
   const [description, setDescription] = useState("");
+  const [language, setLanguage] = useState<'French' | 'Spanish' | 'Other' | "">("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -35,6 +37,7 @@ export const FolderForm = ({ editingFolder, categoryId, categoryName, parentFold
       setFromLanguage(editingFolder.fromLanguage);
       setToLanguage(editingFolder.toLanguage);
       setDescription(editingFolder.description || "");
+      setLanguage(editingFolder.language || "");
     }
   }, [editingFolder]);
 
@@ -66,24 +69,33 @@ export const FolderForm = ({ editingFolder, categoryId, categoryName, parentFold
         });
       }
     } else if (isGrammarCategory && !isSubFolder) {
-      // For Grammar language folders, only name is required
+      // For Grammar language folders, name and language selection are required
       if (!name.trim()) {
         toast({
           title: "Error",
-          description: "Please enter a language name",
+          description: "Please enter a folder name",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!language) {
+        toast({
+          title: "Error",
+          description: "Please select a language",
           variant: "destructive",
         });
         return;
       }
       
       if (editingFolder && onUpdate) {
-        onUpdate(editingFolder.id, name.trim(), '', '');
+        onUpdate(editingFolder.id, name.trim(), '', '', undefined, language);
         toast({
           title: "Success!",
           description: "Language folder updated successfully",
         });
       } else {
-        onAdd(name.trim(), '', '', categoryId || editingFolder?.categoryId || '');
+        onAdd(name.trim(), '', '', categoryId || editingFolder?.categoryId || '', undefined, undefined, language);
         toast({
           title: "Success!",
           description: "Language folder created successfully",
@@ -119,6 +131,7 @@ export const FolderForm = ({ editingFolder, categoryId, categoryName, parentFold
     setFromLanguage("");
     setToLanguage("");
     setDescription("");
+    setLanguage("");
   };
 
   return (
@@ -168,16 +181,31 @@ export const FolderForm = ({ editingFolder, categoryId, categoryName, parentFold
                 </div>
               </>
             ) : isGrammarCategory ? (
-              <div className="space-y-2">
-                <Label htmlFor="name">Language Name</Label>
-                <Input
-                  id="name"
-                  placeholder="e.g., French, Swedish, Spanish"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  autoFocus
-                />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Folder Name</Label>
+                  <Input
+                    id="name"
+                    placeholder="e.g., French Grammar, Spanish Basics"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="language">Language *</Label>
+                  <Select value={language} onValueChange={(value: 'French' | 'Spanish' | 'Other') => setLanguage(value)}>
+                    <SelectTrigger id="language">
+                      <SelectValue placeholder="Select a language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="French">French</SelectItem>
+                      <SelectItem value="Spanish">Spanish</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
             ) : (
               <>
                 <div className="space-y-2">

@@ -108,9 +108,23 @@ const Index = () => {
         }
         
         // Migration: Add default "Verbs" folder to existing Grammar language folders
+        // Also migrate existing language folders to have language: 'Other' if not set
         const grammarLanguageFolders = migratedFolders.filter(
           f => f.categoryId === 'grammar' && !f.parentFolderId
         );
+        
+        // Migrate existing grammar language folders to have language: 'Other' if not set
+        // Also add description to existing Verbs folders if missing
+        migratedFolders = migratedFolders.map(f => {
+          if (f.categoryId === 'grammar' && !f.parentFolderId && !f.language) {
+            return { ...f, language: 'Other' as const };
+          }
+          // Add description to existing Verbs default folders
+          if (f.name === 'Verbs' && f.isDefault && !f.description) {
+            return { ...f, description: 'Practice conjugations' };
+          }
+          return f;
+        });
         
         const newFoldersToAdd: Folder[] = [];
         const newDecksToAdd: Deck[] = [];
@@ -125,6 +139,7 @@ const Index = () => {
             const verbsFolder: Folder = {
               id: crypto.randomUUID(),
               name: 'Verbs',
+              description: 'Practice conjugations',
               fromLanguage: langFolder.fromLanguage,
               toLanguage: langFolder.toLanguage,
               categoryId: 'grammar',
@@ -252,7 +267,7 @@ const Index = () => {
     setMode('folders');
   };
 
-  const addFolder = (name: string, fromLanguage: string, toLanguage: string, categoryId: string, parentFolderId?: string, description?: string) => {
+  const addFolder = (name: string, fromLanguage: string, toLanguage: string, categoryId: string, parentFolderId?: string, description?: string, language?: 'French' | 'Spanish' | 'Other') => {
     const newFolder: Folder = {
       id: crypto.randomUUID(),
       name,
@@ -261,6 +276,7 @@ const Index = () => {
       categoryId: categoryId || navigation.currentCategoryId || 'vocabulary',
       parentFolderId,
       description,
+      language,
       createdAt: new Date(),
     };
     
@@ -313,6 +329,7 @@ const Index = () => {
       const verbsFolder: Folder = {
         id: crypto.randomUUID(),
         name: 'Verbs',
+        description: 'Practice conjugations',
         fromLanguage,
         toLanguage,
         categoryId: 'grammar',
@@ -364,9 +381,9 @@ const Index = () => {
     setMode('folders');
   };
 
-  const updateFolder = (id: string, name: string, fromLanguage: string, toLanguage: string, description?: string) => {
+  const updateFolder = (id: string, name: string, fromLanguage: string, toLanguage: string, description?: string, language?: 'French' | 'Spanish' | 'Other') => {
     setFolders(prev => prev.map(folder => 
-      folder.id === id ? { ...folder, name, fromLanguage, toLanguage, description } : folder
+      folder.id === id ? { ...folder, name, fromLanguage, toLanguage, description, language } : folder
     ));
     setMode('folders');
     toast({
