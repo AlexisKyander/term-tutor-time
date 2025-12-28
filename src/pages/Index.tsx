@@ -194,7 +194,7 @@ const Index = () => {
       createdAt: new Date(),
     };
     
-    // If this is a grammar content folder (has a parent), automatically create two sub-folders
+    // If this is a grammar content folder (has a parent), automatically create sub-folders
     const parentFolder = parentFolderId ? folders.find(f => f.id === parentFolderId) : null;
     const isGrammarContentFolder = parentFolder && parentFolder.categoryId === 'grammar' && !parentFolder.parentFolderId;
     
@@ -238,6 +238,55 @@ const Index = () => {
       
       setFolders(prev => [...prev, newFolder, grammarRulesFolder, grammarExercisesFolder]);
       setDecks(prev => [...prev, grammarRulesDeck]);
+    } else if (categoryId === 'grammar' && !parentFolderId) {
+      // This is a top-level Grammar language folder - auto-create a "Verbs" sub-folder
+      const verbsFolder: Folder = {
+        id: crypto.randomUUID(),
+        name: 'Verbs',
+        fromLanguage,
+        toLanguage,
+        categoryId: 'grammar',
+        parentFolderId: newFolder.id,
+        isDefault: true, // Cannot be deleted
+        createdAt: new Date(),
+      };
+      
+      // Create the Grammar rules and Grammar exercises sub-folders inside Verbs
+      const verbsGrammarRulesFolder: Folder = {
+        id: crypto.randomUUID(),
+        name: 'Grammar rules',
+        fromLanguage,
+        toLanguage,
+        categoryId: 'grammar',
+        parentFolderId: verbsFolder.id,
+        type: 'grammar-rules',
+        createdAt: new Date(),
+      };
+      
+      const verbsGrammarExercisesFolder: Folder = {
+        id: crypto.randomUUID(),
+        name: 'Grammar exercises',
+        fromLanguage,
+        toLanguage,
+        categoryId: 'grammar',
+        parentFolderId: verbsFolder.id,
+        type: 'grammar-exercises',
+        createdAt: new Date(),
+      };
+      
+      // Auto-create a singleton deck for Verbs Grammar Rules folder
+      const verbsGrammarRulesDeck: Deck = {
+        id: crypto.randomUUID(),
+        name: 'Grammar Rules',
+        folderId: verbsGrammarRulesFolder.id,
+        fromLanguage,
+        toLanguage,
+        deckType: 'grammar-rules',
+        createdAt: new Date(),
+      };
+      
+      setFolders(prev => [...prev, newFolder, verbsFolder, verbsGrammarRulesFolder, verbsGrammarExercisesFolder]);
+      setDecks(prev => [...prev, verbsGrammarRulesDeck]);
     } else {
       setFolders(prev => [...prev, newFolder]);
     }
@@ -262,6 +311,18 @@ const Index = () => {
   };
 
   const deleteFolder = (id: string) => {
+    const folderToDelete = folders.find(f => f.id === id);
+    
+    // Prevent deletion of default folders
+    if (folderToDelete?.isDefault) {
+      toast({
+        title: "Cannot delete",
+        description: "This is a default folder and cannot be deleted",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const relatedDecks = decks.filter(deck => deck.folderId === id);
     const relatedVocab = vocabulary.filter(item => 
       relatedDecks.some(deck => deck.id === item.deckId)

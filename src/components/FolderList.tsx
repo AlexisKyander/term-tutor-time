@@ -14,6 +14,7 @@ export interface Folder {
   parentFolderId?: string;
   description?: string;
   type?: 'grammar-rules' | 'grammar-exercises';
+  isDefault?: boolean; // Default folders cannot be deleted
   createdAt: Date;
 }
 
@@ -145,16 +146,18 @@ export const FolderList = ({ folders, categoryName, categoryId, onSelectFolder, 
                       >
                         <Pencil className="w-3 h-3" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteClick(folder.id);
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {!folder.isDefault && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(folder.id);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>
