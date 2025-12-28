@@ -92,16 +92,86 @@ const Index = () => {
         const parsed = JSON.parse(savedData);
         
         // Migration: Add categoryId to existing folders if they don't have it
+        let migratedFolders: Folder[] = [];
+        let migratedDecks: Deck[] = [];
+        
         if (parsed.folders) {
-          const migratedFolders = parsed.folders.map((f: Folder) => ({
+          migratedFolders = parsed.folders.map((f: Folder) => ({
             ...f,
             categoryId: f.categoryId || 'vocabulary', // Default to 'vocabulary' for existing folders
             createdAt: new Date(f.createdAt)
           }));
-          setFolders(migratedFolders);
         }
         
-        if (parsed.decks) setDecks(parsed.decks.map((d: Deck) => ({ ...d, createdAt: new Date(d.createdAt) })));
+        if (parsed.decks) {
+          migratedDecks = parsed.decks.map((d: Deck) => ({ ...d, createdAt: new Date(d.createdAt) }));
+        }
+        
+        // Migration: Add default "Verbs" folder to existing Grammar language folders
+        const grammarLanguageFolders = migratedFolders.filter(
+          f => f.categoryId === 'grammar' && !f.parentFolderId
+        );
+        
+        const newFoldersToAdd: Folder[] = [];
+        const newDecksToAdd: Deck[] = [];
+        
+        grammarLanguageFolders.forEach(langFolder => {
+          // Check if Verbs folder already exists for this language folder
+          const hasVerbsFolder = migratedFolders.some(
+            f => f.parentFolderId === langFolder.id && f.name === 'Verbs' && f.isDefault
+          );
+          
+          if (!hasVerbsFolder) {
+            const verbsFolder: Folder = {
+              id: crypto.randomUUID(),
+              name: 'Verbs',
+              fromLanguage: langFolder.fromLanguage,
+              toLanguage: langFolder.toLanguage,
+              categoryId: 'grammar',
+              parentFolderId: langFolder.id,
+              isDefault: true,
+              createdAt: new Date(),
+            };
+            
+            const verbsGrammarRulesFolder: Folder = {
+              id: crypto.randomUUID(),
+              name: 'Grammar rules',
+              fromLanguage: langFolder.fromLanguage,
+              toLanguage: langFolder.toLanguage,
+              categoryId: 'grammar',
+              parentFolderId: verbsFolder.id,
+              type: 'grammar-rules',
+              createdAt: new Date(),
+            };
+            
+            const verbsGrammarExercisesFolder: Folder = {
+              id: crypto.randomUUID(),
+              name: 'Grammar exercises',
+              fromLanguage: langFolder.fromLanguage,
+              toLanguage: langFolder.toLanguage,
+              categoryId: 'grammar',
+              parentFolderId: verbsFolder.id,
+              type: 'grammar-exercises',
+              createdAt: new Date(),
+            };
+            
+            const verbsGrammarRulesDeck: Deck = {
+              id: crypto.randomUUID(),
+              name: 'Grammar Rules',
+              folderId: verbsGrammarRulesFolder.id,
+              fromLanguage: langFolder.fromLanguage,
+              toLanguage: langFolder.toLanguage,
+              deckType: 'grammar-rules',
+              createdAt: new Date(),
+            };
+            
+            newFoldersToAdd.push(verbsFolder, verbsGrammarRulesFolder, verbsGrammarExercisesFolder);
+            newDecksToAdd.push(verbsGrammarRulesDeck);
+          }
+        });
+        
+        setFolders([...migratedFolders, ...newFoldersToAdd]);
+        setDecks([...migratedDecks, ...newDecksToAdd]);
         if (parsed.vocabulary) setVocabulary(parsed.vocabulary.map((v: VocabularyItem) => ({ ...v, createdAt: new Date(v.createdAt) })));
         if (parsed.settings) setSettings({ ...DEFAULT_SETTINGS, ...parsed.settings });
       } catch (error) {
