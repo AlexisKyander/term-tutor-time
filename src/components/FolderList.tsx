@@ -15,6 +15,7 @@ export interface Folder {
   description?: string;
   type?: 'grammar-rules' | 'grammar-exercises';
   isDefault?: boolean; // Default folders cannot be deleted
+  language?: 'French' | 'Spanish' | 'Other'; // Language selection for Grammar language folders
   createdAt: Date;
 }
 
