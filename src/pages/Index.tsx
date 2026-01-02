@@ -15,6 +15,8 @@ import { PreviewMode } from "@/components/PreviewMode";
 import { DirectionSelector } from "@/components/DirectionSelector";
 import { PreviewOptions } from "@/components/PreviewOptions";
 import { ExerciseSelector } from "@/components/ExerciseSelector";
+import { VerbList, type Verb } from "@/components/VerbList";
+import { VerbForm } from "@/components/VerbForm";
 import { useToast } from "@/hooks/use-toast";
 import { Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -47,7 +49,7 @@ export interface VocabularyItem {
   };
 }
 
-type Mode = 'categories' | 'folders' | 'add-folder' | 'edit-folder' | 'decks' | 'add-deck' | 'edit-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'view-grammar-rule' | 'study' | 'preview' | 'settings' | 'direction-selector' | 'preview-options' | 'exercise-selector';
+type Mode = 'categories' | 'folders' | 'add-folder' | 'edit-folder' | 'decks' | 'add-deck' | 'edit-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'view-grammar-rule' | 'study' | 'preview' | 'settings' | 'direction-selector' | 'preview-options' | 'exercise-selector' | 'verb-list' | 'add-verb' | 'edit-verb';
 
 interface NavigationState {
   currentCategoryId?: string;
@@ -56,6 +58,7 @@ interface NavigationState {
   editingFolderId?: string;
   editingDeckId?: string;
   editingVocabularyId?: string;
+  editingVerbId?: string;
   viewingVocabularyId?: string;
   practicingVocabularyId?: string;
   studyDirection?: 'forward' | 'reverse';
@@ -79,6 +82,7 @@ const Index = () => {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [decks, setDecks] = useState<Deck[]>([]);
   const [vocabulary, setVocabulary] = useState<VocabularyItem[]>([]);
+  const [verbs, setVerbs] = useState<Verb[]>([]);
   const [mode, setMode] = useState<Mode>('categories');
   const [navigation, setNavigation] = useState<NavigationState>({});
   const [settings, setSettings] = useState<StudySettings>(DEFAULT_SETTINGS);
@@ -188,6 +192,7 @@ const Index = () => {
         setFolders([...migratedFolders, ...newFoldersToAdd]);
         setDecks([...migratedDecks, ...newDecksToAdd]);
         if (parsed.vocabulary) setVocabulary(parsed.vocabulary.map((v: VocabularyItem) => ({ ...v, createdAt: new Date(v.createdAt) })));
+        if (parsed.verbs) setVerbs(parsed.verbs.map((v: Verb) => ({ ...v, createdAt: new Date(v.createdAt) })));
         if (parsed.settings) setSettings({ ...DEFAULT_SETTINGS, ...parsed.settings });
       } catch (error) {
         console.error('Failed to load data from localStorage:', error);
@@ -201,10 +206,11 @@ const Index = () => {
       folders,
       decks,
       vocabulary,
+      verbs,
       settings,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
-  }, [folders, decks, vocabulary, settings]);
+  }, [folders, decks, vocabulary, verbs, settings]);
 
   const exportData = () => {
     const dataToExport = {
@@ -536,6 +542,61 @@ const Index = () => {
     ));
   };
 
+  // Verb CRUD functions
+  const getCurrentVerbs = () => {
+    return verbs.filter(v => v.folderId === navigation.currentFolderId);
+  };
+
+  const addVerb = (name: string, tags: string[]) => {
+    if (!navigation.currentFolderId) return;
+    const newVerb: Verb = {
+      id: crypto.randomUUID(),
+      name,
+      tags,
+      folderId: navigation.currentFolderId,
+      createdAt: new Date(),
+    };
+    setVerbs(prev => [...prev, newVerb]);
+    setMode('verb-list');
+    toast({
+      title: "Verb added",
+      description: `"${name}" has been added to your verb list`,
+    });
+  };
+
+  const updateVerb = (id: string, name: string, tags: string[]) => {
+    setVerbs(prev => prev.map(verb => 
+      verb.id === id ? { ...verb, name, tags } : verb
+    ));
+    setMode('verb-list');
+    toast({
+      title: "Verb updated",
+      description: `"${name}" has been updated`,
+    });
+  };
+
+  const deleteVerb = (id: string) => {
+    const verb = verbs.find(v => v.id === id);
+    setVerbs(prev => prev.filter(v => v.id !== id));
+    toast({
+      title: "Verb deleted",
+      description: verb ? `"${verb.name}" has been deleted` : "Verb deleted",
+    });
+  };
+
+  const editVerb = (id: string) => {
+    setNavigation(prev => ({ ...prev, editingVerbId: id }));
+    setMode('edit-verb');
+  };
+
+  const practiceConjugations = () => {
+    // TODO: Implement conjugation practice mode
+    toast({
+      title: "Coming soon",
+      description: "Conjugation practice will be available soon!",
+    });
+  };
+
   const selectFolder = (folderId: string) => {
     const folder = folders.find(f => f.id === folderId);
     
@@ -550,10 +611,17 @@ const Index = () => {
     }
     
     // For Grammar content folders (parent is language folder), show grammar rules/exercises sub-folders
+    // BUT if it's the default "Verbs" folder, show the verb list instead
     const parentFolder = folder.parentFolderId ? folders.find(f => f.id === folder.parentFolderId) : null;
     const isGrammarContentFolder = parentFolder && parentFolder.categoryId === 'grammar' && !parentFolder.parentFolderId;
     
     if (isGrammarContentFolder) {
+      // If this is the default Verbs folder, show verb list
+      if (folder.isDefault && folder.name === 'Verbs') {
+        setNavigation(prev => ({ ...prev, currentFolderId: folderId }));
+        setMode('verb-list');
+        return;
+      }
       setNavigation(prev => ({ ...prev, currentFolderId: folderId }));
       setMode('folders');
       return;
@@ -1159,6 +1227,55 @@ const Index = () => {
             onBack={() => setMode('decks')}
           />
         );
+
+      case 'verb-list': {
+        const currentFolder = getCurrentFolder();
+        if (!currentFolder) {
+          setMode('folders');
+          return null;
+        }
+        return (
+          <VerbList
+            verbs={getCurrentVerbs()}
+            folderName={currentFolder.name}
+            onPractice={practiceConjugations}
+            onAddVerb={() => setMode('add-verb')}
+            onEditVerb={editVerb}
+            onDeleteVerb={deleteVerb}
+            onBack={() => {
+              if (currentFolder.parentFolderId) {
+                setNavigation(prev => ({ ...prev, currentFolderId: currentFolder.parentFolderId }));
+              }
+              setMode('folders');
+            }}
+          />
+        );
+      }
+
+      case 'add-verb': {
+        return (
+          <VerbForm
+            onAdd={addVerb}
+            onBack={() => setMode('verb-list')}
+          />
+        );
+      }
+
+      case 'edit-verb': {
+        const editingVerbItem = verbs.find(v => v.id === navigation.editingVerbId);
+        if (!editingVerbItem) {
+          setMode('verb-list');
+          return null;
+        }
+        return (
+          <VerbForm
+            editingVerb={editingVerbItem}
+            onAdd={addVerb}
+            onUpdate={updateVerb}
+            onBack={() => setMode('verb-list')}
+          />
+        );
+      }
 
       default:
         return (
