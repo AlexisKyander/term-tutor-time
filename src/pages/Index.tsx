@@ -17,7 +17,7 @@ import { PreviewOptions } from "@/components/PreviewOptions";
 import { ExerciseSelector } from "@/components/ExerciseSelector";
 import { VerbList, type Verb } from "@/components/VerbList";
 import { VerbForm } from "@/components/VerbForm";
-import { VerbStructureForm } from "@/components/VerbStructureForm";
+import { VerbStructureForm, type VerbStructure } from "@/components/VerbStructureForm";
 import { useToast } from "@/hooks/use-toast";
 import { Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -575,15 +575,15 @@ const Index = () => {
     });
   };
 
-  const updateVerbStructure = (pronouns: string[]) => {
+  const updateVerbStructure = (structure: VerbStructure) => {
     if (!navigation.currentFolderId) return;
     setFolders(prev => prev.map(folder =>
-      folder.id === navigation.currentFolderId ? { ...folder, pronouns } : folder
+      folder.id === navigation.currentFolderId ? { ...folder, verbStructure: structure } : folder
     ));
     setMode('verb-list');
     toast({
       title: "Verb structure updated",
-      description: "Pronouns have been saved",
+      description: "Pronouns and tenses have been saved",
     });
   };
 
@@ -1250,7 +1250,7 @@ const Index = () => {
           <VerbList
             verbs={getCurrentVerbs()}
             folderName={currentFolder.name}
-            folderPronouns={currentFolder.pronouns}
+            folderPronouns={currentFolder.verbStructure?.pronouns}
             onPractice={practiceConjugations}
             onAddVerb={() => setMode('add-verb')}
             onDefineStructure={() => setMode('verb-structure')}
@@ -1300,7 +1300,7 @@ const Index = () => {
         return (
           <VerbStructureForm
             folderName={currentFolder.name}
-            initialPronouns={currentFolder.pronouns}
+            initialStructure={currentFolder.verbStructure}
             onSave={updateVerbStructure}
             onBack={() => setMode('verb-list')}
           />

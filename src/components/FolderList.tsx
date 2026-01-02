@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/c
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { ArrowLeft, Plus, Pencil, Trash2, Languages, Info } from "lucide-react";
+import type { VerbStructure } from "@/components/VerbStructureForm";
 
 export interface Folder {
   id: string;
@@ -16,7 +17,7 @@ export interface Folder {
   type?: 'grammar-rules' | 'grammar-exercises';
   isDefault?: boolean; // Default folders cannot be deleted
   language?: 'French' | 'Spanish' | 'Other'; // Language selection for Grammar language folders
-  pronouns?: string[]; // Pronouns for verb conjugation (stored on Verbs folder)
+  verbStructure?: VerbStructure; // Verb structure with pronouns and tenses (stored on Verbs folder)
   createdAt: Date;
 }
 
