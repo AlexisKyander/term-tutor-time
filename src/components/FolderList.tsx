@@ -16,6 +16,7 @@ export interface Folder {
   type?: 'grammar-rules' | 'grammar-exercises';
   isDefault?: boolean; // Default folders cannot be deleted
   language?: 'French' | 'Spanish' | 'Other'; // Language selection for Grammar language folders
+  pronouns?: string[]; // Pronouns for verb conjugation (stored on Verbs folder)
   createdAt: Date;
 }
 

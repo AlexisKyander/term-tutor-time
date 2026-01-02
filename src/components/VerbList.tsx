@@ -2,14 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Plus, Pencil, Trash2, GraduationCap } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, GraduationCap, Settings2 } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 
 export interface Verb {
   id: string;
   name: string;
-  pronouns: string[];
   tags: string[];
   folderId: string;
 }
@@ -17,8 +16,10 @@ export interface Verb {
 interface VerbListProps {
   verbs: Verb[];
   folderName: string;
+  folderPronouns?: string[];
   onPractice: () => void;
   onAddVerb: () => void;
+  onDefineStructure: () => void;
   onEditVerb: (id: string) => void;
   onDeleteVerb: (id: string) => void;
   onBack: () => void;
@@ -27,8 +28,10 @@ interface VerbListProps {
 export const VerbList = ({ 
   verbs, 
   folderName, 
+  folderPronouns = [],
   onPractice, 
   onAddVerb, 
+  onDefineStructure,
   onEditVerb, 
   onDeleteVerb, 
   onBack 
@@ -69,6 +72,10 @@ export const VerbList = ({
             <GraduationCap className="w-4 h-4 mr-2" />
             Practice conjugations
           </Button>
+          <Button variant="outline" onClick={onDefineStructure}>
+            <Settings2 className="w-4 h-4 mr-2" />
+            Define verb structure
+          </Button>
           <Button onClick={onAddVerb}>
             <Plus className="w-4 h-4 mr-2" />
             Add verb
@@ -96,7 +103,6 @@ export const VerbList = ({
               <TableHeader>
                 <TableRow>
                   <TableHead>Verb</TableHead>
-                  <TableHead>Pronoms</TableHead>
                   <TableHead>Tags</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
@@ -105,15 +111,6 @@ export const VerbList = ({
                 {verbs.map((verb) => (
                   <TableRow key={verb.id}>
                     <TableCell className="font-medium">{verb.name}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1 flex-wrap">
-                        {verb.pronouns?.map((pronoun, index) => (
-                          <Badge key={index} variant="outline">
-                            {pronoun}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
                     <TableCell>
                       <div className="flex gap-1 flex-wrap">
                         {verb.tags.map((tag, index) => (

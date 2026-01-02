@@ -17,6 +17,7 @@ import { PreviewOptions } from "@/components/PreviewOptions";
 import { ExerciseSelector } from "@/components/ExerciseSelector";
 import { VerbList, type Verb } from "@/components/VerbList";
 import { VerbForm } from "@/components/VerbForm";
+import { VerbStructureForm } from "@/components/VerbStructureForm";
 import { useToast } from "@/hooks/use-toast";
 import { Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,7 +50,7 @@ export interface VocabularyItem {
   };
 }
 
-type Mode = 'categories' | 'folders' | 'add-folder' | 'edit-folder' | 'decks' | 'add-deck' | 'edit-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'view-grammar-rule' | 'study' | 'preview' | 'settings' | 'direction-selector' | 'preview-options' | 'exercise-selector' | 'verb-list' | 'add-verb' | 'edit-verb';
+type Mode = 'categories' | 'folders' | 'add-folder' | 'edit-folder' | 'decks' | 'add-deck' | 'edit-deck' | 'vocabulary' | 'add-word' | 'edit-word' | 'view-grammar-rule' | 'study' | 'preview' | 'settings' | 'direction-selector' | 'preview-options' | 'exercise-selector' | 'verb-list' | 'add-verb' | 'edit-verb' | 'verb-structure';
 
 interface NavigationState {
   currentCategoryId?: string;
@@ -192,7 +193,7 @@ const Index = () => {
         setFolders([...migratedFolders, ...newFoldersToAdd]);
         setDecks([...migratedDecks, ...newDecksToAdd]);
         if (parsed.vocabulary) setVocabulary(parsed.vocabulary.map((v: VocabularyItem) => ({ ...v, createdAt: new Date(v.createdAt) })));
-        if (parsed.verbs) setVerbs(parsed.verbs.map((v: Verb) => ({ ...v, pronouns: v.pronouns || [] })));
+        if (parsed.verbs) setVerbs(parsed.verbs.map((v: Verb) => ({ ...v })));
         if (parsed.settings) setSettings({ ...DEFAULT_SETTINGS, ...parsed.settings });
       } catch (error) {
         console.error('Failed to load data from localStorage:', error);
@@ -547,12 +548,11 @@ const Index = () => {
     return verbs.filter(v => v.folderId === navigation.currentFolderId);
   };
 
-  const addVerb = (name: string, pronouns: string[], tags: string[]) => {
+  const addVerb = (name: string, tags: string[]) => {
     if (!navigation.currentFolderId) return;
     const newVerb: Verb = {
       id: crypto.randomUUID(),
       name,
-      pronouns,
       tags,
       folderId: navigation.currentFolderId,
     };
@@ -564,14 +564,26 @@ const Index = () => {
     });
   };
 
-  const updateVerb = (id: string, name: string, pronouns: string[], tags: string[]) => {
+  const updateVerb = (id: string, name: string, tags: string[]) => {
     setVerbs(prev => prev.map(verb => 
-      verb.id === id ? { ...verb, name, pronouns, tags } : verb
+      verb.id === id ? { ...verb, name, tags } : verb
     ));
     setMode('verb-list');
     toast({
       title: "Verb updated",
       description: `"${name}" has been updated`,
+    });
+  };
+
+  const updateVerbStructure = (pronouns: string[]) => {
+    if (!navigation.currentFolderId) return;
+    setFolders(prev => prev.map(folder =>
+      folder.id === navigation.currentFolderId ? { ...folder, pronouns } : folder
+    ));
+    setMode('verb-list');
+    toast({
+      title: "Verb structure updated",
+      description: "Pronouns have been saved",
     });
   };
 
@@ -1238,8 +1250,10 @@ const Index = () => {
           <VerbList
             verbs={getCurrentVerbs()}
             folderName={currentFolder.name}
+            folderPronouns={currentFolder.pronouns}
             onPractice={practiceConjugations}
             onAddVerb={() => setMode('add-verb')}
+            onDefineStructure={() => setMode('verb-structure')}
             onEditVerb={editVerb}
             onDeleteVerb={deleteVerb}
             onBack={() => {
@@ -1272,6 +1286,22 @@ const Index = () => {
             editingVerb={editingVerbItem}
             onAdd={addVerb}
             onUpdate={updateVerb}
+            onBack={() => setMode('verb-list')}
+          />
+        );
+      }
+
+      case 'verb-structure': {
+        const currentFolder = getCurrentFolder();
+        if (!currentFolder) {
+          setMode('verb-list');
+          return null;
+        }
+        return (
+          <VerbStructureForm
+            folderName={currentFolder.name}
+            initialPronouns={currentFolder.pronouns}
+            onSave={updateVerbStructure}
             onBack={() => setMode('verb-list')}
           />
         );
