@@ -15,7 +15,7 @@ import { PreviewMode } from "@/components/PreviewMode";
 import { DirectionSelector } from "@/components/DirectionSelector";
 import { PreviewOptions } from "@/components/PreviewOptions";
 import { ExerciseSelector } from "@/components/ExerciseSelector";
-import { VerbList, type Verb } from "@/components/VerbList";
+import { VerbList, type Verb, type VerbConjugation } from "@/components/VerbList";
 import { VerbForm } from "@/components/VerbForm";
 import { VerbStructureForm, type VerbStructure } from "@/components/VerbStructureForm";
 import { useToast } from "@/hooks/use-toast";
@@ -548,12 +548,13 @@ const Index = () => {
     return verbs.filter(v => v.folderId === navigation.currentFolderId);
   };
 
-  const addVerb = (name: string, tags: string[]) => {
+  const addVerb = (name: string, tags: string[], conjugations: VerbConjugation[]) => {
     if (!navigation.currentFolderId) return;
     const newVerb: Verb = {
       id: crypto.randomUUID(),
       name,
       tags,
+      conjugations,
       folderId: navigation.currentFolderId,
     };
     setVerbs(prev => [...prev, newVerb]);
@@ -564,9 +565,9 @@ const Index = () => {
     });
   };
 
-  const updateVerb = (id: string, name: string, tags: string[]) => {
+  const updateVerb = (id: string, name: string, tags: string[], conjugations: VerbConjugation[]) => {
     setVerbs(prev => prev.map(verb => 
-      verb.id === id ? { ...verb, name, tags } : verb
+      verb.id === id ? { ...verb, name, tags, conjugations } : verb
     ));
     setMode('verb-list');
     toast({
@@ -1267,8 +1268,10 @@ const Index = () => {
       }
 
       case 'add-verb': {
+        const currentFolder = getCurrentFolder();
         return (
           <VerbForm
+            verbStructure={currentFolder?.verbStructure}
             onAdd={addVerb}
             onBack={() => setMode('verb-list')}
           />
@@ -1276,6 +1279,7 @@ const Index = () => {
       }
 
       case 'edit-verb': {
+        const currentFolder = getCurrentFolder();
         const editingVerbItem = verbs.find(v => v.id === navigation.editingVerbId);
         if (!editingVerbItem) {
           setMode('verb-list');
@@ -1284,6 +1288,7 @@ const Index = () => {
         return (
           <VerbForm
             editingVerb={editingVerbItem}
+            verbStructure={currentFolder?.verbStructure}
             onAdd={addVerb}
             onUpdate={updateVerb}
             onBack={() => setMode('verb-list')}
