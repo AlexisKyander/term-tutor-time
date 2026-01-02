@@ -3,34 +3,68 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Plus, X, GripVertical } from "lucide-react";
+import { ArrowLeft, Plus, X, GripVertical, ChevronDown, ChevronUp } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+
+export interface TenseStructure {
+  name: string;
+  enabledPronouns: string[];
+}
+
+export interface VerbStructure {
+  pronouns: string[];
+  simpleTenses: TenseStructure[];
+  compoundTenses: TenseStructure[];
+}
 
 interface VerbStructureFormProps {
   folderName: string;
-  initialPronouns?: string[];
-  onSave: (pronouns: string[]) => void;
+  initialStructure?: VerbStructure;
+  onSave: (structure: VerbStructure) => void;
   onBack: () => void;
 }
 
 export const VerbStructureForm = ({ 
   folderName, 
-  initialPronouns = [], 
+  initialStructure,
   onSave, 
   onBack 
 }: VerbStructureFormProps) => {
   const [pronounInput, setPronounInput] = useState("");
-  const [pronouns, setPronouns] = useState<string[]>(initialPronouns);
+  const [pronouns, setPronouns] = useState<string[]>(initialStructure?.pronouns || []);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  
+  const [simpleTenseInput, setSimpleTenseInput] = useState("");
+  const [simpleTenses, setSimpleTenses] = useState<TenseStructure[]>(initialStructure?.simpleTenses || []);
+  
+  const [compoundTenseInput, setCompoundTenseInput] = useState("");
+  const [compoundTenses, setCompoundTenses] = useState<TenseStructure[]>(initialStructure?.compoundTenses || []);
+  
+  const [expandedTense, setExpandedTense] = useState<string | null>(null);
 
   useEffect(() => {
-    setPronouns(initialPronouns);
-  }, [initialPronouns]);
+    if (initialStructure) {
+      setPronouns(initialStructure.pronouns);
+      setSimpleTenses(initialStructure.simpleTenses);
+      setCompoundTenses(initialStructure.compoundTenses);
+    }
+  }, [initialStructure]);
 
   const handleAddPronoun = () => {
     const trimmedPronoun = pronounInput.trim();
     if (trimmedPronoun && !pronouns.includes(trimmedPronoun)) {
-      setPronouns([...pronouns, trimmedPronoun]);
+      const newPronouns = [...pronouns, trimmedPronoun];
+      setPronouns(newPronouns);
       setPronounInput("");
+      // Update all tenses to include the new pronoun by default
+      setSimpleTenses(simpleTenses.map(t => ({
+        ...t,
+        enabledPronouns: [...t.enabledPronouns, trimmedPronoun]
+      })));
+      setCompoundTenses(compoundTenses.map(t => ({
+        ...t,
+        enabledPronouns: [...t.enabledPronouns, trimmedPronoun]
+      })));
     }
   };
 
@@ -42,7 +76,17 @@ export const VerbStructureForm = ({
   };
 
   const handleRemovePronoun = (pronounToRemove: string) => {
-    setPronouns(pronouns.filter(p => p !== pronounToRemove));
+    const newPronouns = pronouns.filter(p => p !== pronounToRemove);
+    setPronouns(newPronouns);
+    // Remove pronoun from all tenses
+    setSimpleTenses(simpleTenses.map(t => ({
+      ...t,
+      enabledPronouns: t.enabledPronouns.filter(p => p !== pronounToRemove)
+    })));
+    setCompoundTenses(compoundTenses.map(t => ({
+      ...t,
+      enabledPronouns: t.enabledPronouns.filter(p => p !== pronounToRemove)
+    })));
   };
 
   const handleDragStart = (index: number) => {
@@ -65,10 +109,169 @@ export const VerbStructureForm = ({
     setDraggedIndex(null);
   };
 
+  const handleAddSimpleTense = () => {
+    const trimmed = simpleTenseInput.trim();
+    if (trimmed && !simpleTenses.some(t => t.name === trimmed)) {
+      setSimpleTenses([...simpleTenses, { name: trimmed, enabledPronouns: [...pronouns] }]);
+      setSimpleTenseInput("");
+    }
+  };
+
+  const handleAddCompoundTense = () => {
+    const trimmed = compoundTenseInput.trim();
+    if (trimmed && !compoundTenses.some(t => t.name === trimmed)) {
+      setCompoundTenses([...compoundTenses, { name: trimmed, enabledPronouns: [...pronouns] }]);
+      setCompoundTenseInput("");
+    }
+  };
+
+  const handleRemoveSimpleTense = (tenseName: string) => {
+    setSimpleTenses(simpleTenses.filter(t => t.name !== tenseName));
+  };
+
+  const handleRemoveCompoundTense = (tenseName: string) => {
+    setCompoundTenses(compoundTenses.filter(t => t.name !== tenseName));
+  };
+
+  const togglePronounForTense = (
+    tenseType: 'simple' | 'compound',
+    tenseName: string,
+    pronoun: string
+  ) => {
+    const updateTenses = (tenses: TenseStructure[]) =>
+      tenses.map(t => {
+        if (t.name !== tenseName) return t;
+        const hasP = t.enabledPronouns.includes(pronoun);
+        return {
+          ...t,
+          enabledPronouns: hasP
+            ? t.enabledPronouns.filter(p => p !== pronoun)
+            : [...t.enabledPronouns, pronoun]
+        };
+      });
+
+    if (tenseType === 'simple') {
+      setSimpleTenses(updateTenses(simpleTenses));
+    } else {
+      setCompoundTenses(updateTenses(compoundTenses));
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(pronouns);
+    onSave({
+      pronouns,
+      simpleTenses,
+      compoundTenses
+    });
   };
+
+  const renderTenseSection = (
+    title: string,
+    tenses: TenseStructure[],
+    tenseInput: string,
+    setTenseInput: (val: string) => void,
+    handleAdd: () => void,
+    handleRemove: (name: string) => void,
+    tenseType: 'simple' | 'compound'
+  ) => (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex gap-2">
+          <Input
+            placeholder="e.g., Present, Imperfect, Future"
+            value={tenseInput}
+            onChange={(e) => setTenseInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleAdd();
+              }
+            }}
+          />
+          <Button type="button" variant="outline" onClick={handleAdd}>
+            <Plus className="w-4 h-4" />
+          </Button>
+        </div>
+        {tenses.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {tenses.map((tense) => {
+              const isExpanded = expandedTense === `${tenseType}-${tense.name}`;
+              return (
+                <div
+                  key={tense.name}
+                  className="border rounded-md bg-card"
+                >
+                  <div
+                    className="flex items-center gap-2 p-2 cursor-pointer"
+                    onClick={() => setExpandedTense(isExpanded ? null : `${tenseType}-${tense.name}`)}
+                  >
+                    {isExpanded ? (
+                      <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    )}
+                    <span className="flex-1">{tense.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {tense.enabledPronouns.length}/{pronouns.length} pronouns
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemove(tense.name);
+                      }}
+                      className="hover:text-destructive"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  {isExpanded && pronouns.length > 0 && (
+                    <div className="px-4 pb-3 pt-1 border-t">
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Select pronouns for this tense:
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {pronouns.map((pronoun) => {
+                          const isEnabled = tense.enabledPronouns.includes(pronoun);
+                          return (
+                            <label
+                              key={pronoun}
+                              className={`flex items-center gap-2 px-3 py-1.5 rounded-md border cursor-pointer transition-colors ${
+                                isEnabled
+                                  ? "bg-primary/10 border-primary text-primary"
+                                  : "bg-muted/50 border-border text-muted-foreground"
+                              }`}
+                            >
+                              <Checkbox
+                                checked={isEnabled}
+                                onCheckedChange={() =>
+                                  togglePronounForTense(tenseType, tense.name, pronoun)
+                                }
+                              />
+                              <span className="text-sm">{pronoun}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {pronouns.length === 0 && (
+          <p className="text-sm text-muted-foreground italic">
+            Add pronouns first to configure tense-specific pronouns.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -85,10 +288,10 @@ export const VerbStructureForm = ({
 
       <Card>
         <CardHeader>
-          <CardTitle>Pronoms (Pronouns)</CardTitle>
+          <CardTitle>Pronouns</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="pronouns">Add pronouns for conjugation</Label>
               <p className="text-sm text-muted-foreground">
@@ -133,13 +336,35 @@ export const VerbStructureForm = ({
                 </div>
               )}
             </div>
-
-            <Button type="submit">
-              Save Structure
-            </Button>
-          </form>
+          </div>
         </CardContent>
       </Card>
+
+      {renderTenseSection(
+        "Simple Tenses",
+        simpleTenses,
+        simpleTenseInput,
+        setSimpleTenseInput,
+        handleAddSimpleTense,
+        handleRemoveSimpleTense,
+        'simple'
+      )}
+
+      {renderTenseSection(
+        "Compound Tenses",
+        compoundTenses,
+        compoundTenseInput,
+        setCompoundTenseInput,
+        handleAddCompoundTense,
+        handleRemoveCompoundTense,
+        'compound'
+      )}
+
+      <form onSubmit={handleSubmit}>
+        <Button type="submit" className="w-full">
+          Save Structure
+        </Button>
+      </form>
     </div>
   );
 };
