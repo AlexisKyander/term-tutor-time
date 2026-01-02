@@ -6,10 +6,17 @@ import { ArrowLeft, Plus, Pencil, Trash2, GraduationCap, Settings2 } from "lucid
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 
+export interface VerbConjugation {
+  tense: string;
+  tenseType: 'simple' | 'compound';
+  conjugations: Record<string, string>; // pronoun -> conjugated form
+}
+
 export interface Verb {
   id: string;
   name: string;
   tags: string[];
+  conjugations: VerbConjugation[];
   folderId: string;
 }
 
