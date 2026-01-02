@@ -192,7 +192,7 @@ const Index = () => {
         setFolders([...migratedFolders, ...newFoldersToAdd]);
         setDecks([...migratedDecks, ...newDecksToAdd]);
         if (parsed.vocabulary) setVocabulary(parsed.vocabulary.map((v: VocabularyItem) => ({ ...v, createdAt: new Date(v.createdAt) })));
-        if (parsed.verbs) setVerbs(parsed.verbs.map((v: Verb) => ({ ...v, createdAt: new Date(v.createdAt) })));
+        if (parsed.verbs) setVerbs(parsed.verbs.map((v: Verb) => ({ ...v, pronouns: v.pronouns || [] })));
         if (parsed.settings) setSettings({ ...DEFAULT_SETTINGS, ...parsed.settings });
       } catch (error) {
         console.error('Failed to load data from localStorage:', error);
@@ -547,14 +547,14 @@ const Index = () => {
     return verbs.filter(v => v.folderId === navigation.currentFolderId);
   };
 
-  const addVerb = (name: string, tags: string[]) => {
+  const addVerb = (name: string, pronouns: string[], tags: string[]) => {
     if (!navigation.currentFolderId) return;
     const newVerb: Verb = {
       id: crypto.randomUUID(),
       name,
+      pronouns,
       tags,
       folderId: navigation.currentFolderId,
-      createdAt: new Date(),
     };
     setVerbs(prev => [...prev, newVerb]);
     setMode('verb-list');
@@ -564,9 +564,9 @@ const Index = () => {
     });
   };
 
-  const updateVerb = (id: string, name: string, tags: string[]) => {
+  const updateVerb = (id: string, name: string, pronouns: string[], tags: string[]) => {
     setVerbs(prev => prev.map(verb => 
-      verb.id === id ? { ...verb, name, tags } : verb
+      verb.id === id ? { ...verb, name, pronouns, tags } : verb
     ));
     setMode('verb-list');
     toast({

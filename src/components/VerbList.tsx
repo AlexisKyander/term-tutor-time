@@ -9,9 +9,9 @@ import { Badge } from "@/components/ui/badge";
 export interface Verb {
   id: string;
   name: string;
+  pronouns: string[];
   tags: string[];
   folderId: string;
-  createdAt: Date;
 }
 
 interface VerbListProps {
@@ -96,6 +96,7 @@ export const VerbList = ({
               <TableHeader>
                 <TableRow>
                   <TableHead>Verb</TableHead>
+                  <TableHead>Pronoms</TableHead>
                   <TableHead>Tags</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
@@ -104,6 +105,15 @@ export const VerbList = ({
                 {verbs.map((verb) => (
                   <TableRow key={verb.id}>
                     <TableCell className="font-medium">{verb.name}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1 flex-wrap">
+                        {verb.pronouns?.map((pronoun, index) => (
+                          <Badge key={index} variant="outline">
+                            {pronoun}
+                          </Badge>
+                        ))}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-1 flex-wrap">
                         {verb.tags.map((tag, index) => (
